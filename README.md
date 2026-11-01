@@ -113,7 +113,7 @@ O que sustenta a nota (não desfazer sem medir de novo):
 | `RESEND_API_KEY`, `CONTACT_TO_EMAIL`, `CONTACT_FROM_EMAIL` | Envio do formulário | O formulário responde "not active yet" |
 | `PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | Anti-spam | Só o honeypot protege |
 | `PUBLIC_GTM_ID` | Google Tag Manager (padrão `GTM-WPRVL288`; vazio desliga) | Usa o contêiner padrão |
-| `PUBLIC_GA4_ID` | GA4 direto, sem passar pelo Tag Manager | Só o que estiver no Tag Manager |
+| `PUBLIC_GA4_ID` | GA4 direto pelo gtag.js (padrão `G-2YVE958NV1`; vazio desliga) | Usa o ID padrão |
 | `PUBLIC_CLARITY_ID` | Microsoft Clarity | Sem Clarity |
 
 ## Blog

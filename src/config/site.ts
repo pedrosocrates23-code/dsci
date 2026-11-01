@@ -32,7 +32,9 @@ export const CONTACT = {
 };
 
 export const INTEGRATIONS = {
-  ga4: (env.PUBLIC_GA4_ID as string | undefined) || null,
+  /** GA4 direto (gtag.js): ID informado pela usuária em 2026-11-01. PUBLIC_GA4_ID troca;
+   *  PUBLIC_GA4_ID vazio desliga. */
+  ga4: ((env.PUBLIC_GA4_ID as string | undefined) ?? 'G-2YVE958NV1') || null,
   /** Google Tag Manager: contêiner informado pela usuária em 2026-10-31. PUBLIC_GTM_ID troca;
    *  PUBLIC_GTM_ID vazio desliga. */
   gtm: ((env.PUBLIC_GTM_ID as string | undefined) ?? 'GTM-WPRVL288') || null,
