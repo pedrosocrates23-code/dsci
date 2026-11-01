@@ -1,0 +1,92 @@
+---
+/**
+ * Hub do blog: filtro por categoria + cartões que ABREM O ARTIGO (link real, rastreável).
+ * Clique no cartão: navegação direta, sem transição (pedido da usuária, 2026-10-31).
+ */
+import { Image } from 'astro:assets';
+import type { HubCard } from '../lib/hub';
+interface Props { cards: HubCard[]; preview?: boolean; showFilters?: boolean; }
+const { cards, preview = false, showFilters = true } = Astro.props;
+const topics = [...new Map(cards.map((c) => [c.topicId, c.topicName])).entries()];
+---
+<section class="hub" data-hub>
+  {preview && <p class="hub__preview">Preview with sample cards. Shown only in local development and never published.</p>}
+  {showFilters && topics.length > 1 && (
+    <div class="hub__filters" role="group" aria-label="Filter by category" data-hub-filters>
+      <button type="button" aria-pressed="true" data-value="all">All</button>
+      {topics.map(([id, name]) => <button type="button" aria-pressed="false" data-value={id}>{name}</button>)}
+    </div>
+  )}
+  <ul class="hub__grid">
+    {cards.map((c) => (
+      <li class="hcard" data-card data-topic={c.topicId}>
+        <a class="hcard__link" href={c.href} data-card-link>
+          {c.cover && (
+            <span class="hcard__media">
+              <Image src={c.cover} alt={c.coverAlt ?? ''} widths={[400, 640, 820]} sizes="(max-width: 640px) 100vw, (max-width: 960px) 50vw, 400px" class="hcard__img" loading="lazy" decoding="async" />
+            </span>
+          )}
+          <span class="hcard__body">
+            <span class="hcard__topic">{c.topicName}</span>
+            <span class="hcard__title">{c.title}</span>
+            <span class="hcard__desc">{c.description}</span>
+            <span class="hcard__meta">{c.dateISO ? <time datetime={c.dateISO}>{c.date}</time> : c.date} · {c.byline}</span>
+          </span>
+          <span class="hcard__plus" aria-hidden="true"></span>
+        </a>
+      </li>
+    ))}
+  </ul>
+</section>
+
+<script>
+  import { gsap } from 'gsap';
+
+  const hub = document.querySelector<HTMLElement>('[data-hub]');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Filtro por categoria: só entra/sai em fade (a grade não é reorganizada com animação).
+  const filters = hub?.querySelector<HTMLElement>('[data-hub-filters]');
+  const cards = hub ? [...hub.querySelectorAll<HTMLElement>('[data-card]')] : [];
+  filters?.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest('button');
+    if (!btn) return;
+    const value = btn.dataset.value;
+    filters.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+    cards.forEach((c) => { c.hidden = !(value === 'all' || c.dataset.topic === value); });
+    if (!reduce) gsap.fromTo(cards.filter((c) => !c.hidden), { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.45, ease: 'power2.out', stagger: 0.05 });
+  });
+</script>
+
+<style>
+  .hub__preview { margin-bottom: 18px; padding: 10px 14px; border: 1px dashed var(--baltic); border-radius: var(--r); color: var(--baltic); font-size: 0.92rem; }
+  .hub__filters { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 5px; margin-bottom: 32px; border-radius: 8px; background: var(--alice); border: 1px solid var(--line); }
+  .hub__filters button { font-family: var(--f-ui); font-size: 0.95rem; font-weight: 500; padding: 10px 16px; border-radius: 5px; border: 0; background: transparent; color: var(--navy); cursor: pointer; transition: background 0.2s, color 0.2s; }
+  .hub__filters button[aria-pressed='true'] { background: var(--navy); color: #fff; }
+  .hub__filters button:hover:not([aria-pressed='true']) { background: rgba(10, 47, 91, 0.08); }
+
+  .hub__grid { list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+  .hcard[hidden] { display: none; }
+  .hcard__link {
+    position: relative; display: grid; grid-template-rows: auto 1fr; height: 100%; overflow: hidden;
+    border-radius: var(--r); background: var(--white); border: 1px solid var(--line);
+    text-decoration: none; color: inherit; transform-origin: center;
+    transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s var(--ease-out);
+  }
+  .hcard__link:hover { border-color: var(--baltic); box-shadow: var(--shadow); transform: translateY(-3px); }
+  .hcard__media { display: block; aspect-ratio: 16 / 9; overflow: hidden; background: var(--alice); }
+  .hcard__media :global(img) { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s var(--ease-out); }
+  .hcard__link:hover .hcard__media :global(img) { transform: scale(1.04); }
+  .hcard__body { display: grid; align-content: start; gap: 12px; padding: 22px 24px 24px; min-height: 200px; }
+  .hcard__topic { justify-self: start; padding: 5px 10px; border-radius: 4px; background: var(--alice); font-family: var(--f-ui); font-size: 0.8rem; font-weight: 600; color: var(--navy); }
+  .hcard__title { font-family: var(--f-display); font-weight: 600; font-size: 1.25rem; line-height: 1.22; letter-spacing: -0.02em; color: var(--navy); }
+  .hcard__desc { font-size: 0.95rem; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .hcard__meta { margin-top: auto; font-size: 0.88rem; color: var(--muted); }
+  .hcard__plus { position: absolute; top: 14px; right: 14px; background: var(--white); width: 28px; height: 28px; border-radius: 5px; border: 1px solid var(--line); transition: transform 0.4s var(--ease-out), background 0.3s; }
+  .hcard__plus::before, .hcard__plus::after { content: ''; position: absolute; left: 50%; top: 50%; width: 12px; height: 1.6px; background: var(--navy); translate: -50% -50%; }
+  .hcard__plus::after { rotate: 90deg; }
+  .hcard__link:hover .hcard__plus { transform: rotate(90deg); }
+
+  @media (max-width: 960px) { .hub__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 640px) { .hub__grid { grid-template-columns: 1fr; } .hcard__body { min-height: 0; } }
+</style>

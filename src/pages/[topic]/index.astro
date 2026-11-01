@@ -1,0 +1,60 @@
+---
+/**
+ * /{categoria}/ — nível do meio do silo (na raiz: /blog/ é só o hub). Existe sempre que a
+ * categoria tem post, para o breadcrumb Home > Categoria > Artigo nunca apontar para 404. Só é indexável (e só
+ * entra no sitemap) com texto de abertura próprio e 3 posts; antes disso, noindex.
+ * No `astro dev` sem posts, gera as categorias dos cartões de prévia.
+ */
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import BlogHub from '../../components/BlogHub.astro';
+import { getTopicsWithPosts, getPosts, topicPath } from '../../lib/blog';
+import { toCard, PREVIEW_CARDS, type HubCard } from '../../lib/hub';
+import { graph, websiteNode, webPageNode, breadcrumbNode } from '../../lib/schema';
+
+export async function getStaticPaths() {
+  const live = await getTopicsWithPosts();
+  if (live.length) {
+    return Promise.all(live.map(async (t) => ({
+      params: { topic: t.topic.id },
+      props: { name: t.topic.data.name, market: t.topic.data.market, intro: t.topic.data.intro, indexable: t.indexable, cards: await Promise.all(t.posts.map(toCard)), preview: false },
+    })));
+  }
+  if (!import.meta.env.DEV || (await getPosts()).length) return [];
+  const topics = await getCollection('topics');
+  return topics
+    .filter((t) => PREVIEW_CARDS.some((c) => c.topicId === t.id))
+    .map((t) => ({
+      params: { topic: t.id },
+      props: { name: t.data.name, market: t.data.market, intro: t.data.intro, indexable: false, cards: PREVIEW_CARDS.filter((c) => c.topicId === t.id), preview: true },
+    }));
+}
+interface Props { name: string; market: string; intro: string | null; indexable: boolean; cards: HubCard[]; preview: boolean; }
+const { name, market, intro, indexable, cards, preview } = Astro.props;
+const { topic } = Astro.params;
+const path = topicPath(topic!);
+const title = `${name}: articles | D-Sci Consulting`;
+// Meta description entre 80 e 155 caracteres (corta na última palavra inteira).
+const rawDesc = intro ?? `Technical articles on ${name.toLowerCase()} from D-Sci Consulting, for regulatory and nonclinical teams working with ${market}.`;
+const description = rawDesc.length <= 155 ? rawDesc : rawDesc.slice(0, 155).replace(/\s+\S*$/, '').replace(/[,;:]$/, '') + '.';
+const latest = cards.map((c) => c.dateISO).filter(Boolean).sort().pop()?.slice(0, 10);
+const crumbs = [{ name: 'Home', path: '/' }, { name, path }];
+const jsonLd = graph(websiteNode(), webPageNode({ path, name: title, description, type: 'CollectionPage', crumbs }), breadcrumbNode(path, crumbs));
+---
+<BaseLayout title={title} description={description} path={path} jsonLd={jsonLd} noindex={!indexable} updated={latest}>
+  <section class="t-hero on-dark">
+    <div class="wrap">
+      <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Home</a> / <span>{name}</span></nav>
+      <h1 class="h-1">{name}</h1>
+      {intro && <p class="t-intro">{intro}</p>}
+    </div>
+  </section>
+  <section class="section"><div class="wrap"><BlogHub cards={cards} preview={preview} showFilters={false} /></div></section>
+</BaseLayout>
+<style>
+  .t-hero { background: var(--navy); padding: 160px 0 64px; }
+  .t-hero .wrap { display: grid; gap: 16px; }
+  .crumbs { font-family: var(--f-ui); font-size: 0.9rem; color: rgba(255,255,255,.7); }
+  .crumbs a { color: rgba(255,255,255,.88); }
+  .t-intro { max-width: 68ch; color: rgba(255,255,255,.86); font-size: 1.15rem; }
+</style>

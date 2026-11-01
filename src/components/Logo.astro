@@ -1,0 +1,27 @@
+---
+/**
+ * Logo D-Sci Consulting em vetor (scripts/make-logo.mjs gera os contornos), reproduzindo a
+ * construção da logo de referência: colchete alto e partido em Mint Leaf, braços sobre o "D",
+ * "D-Sci" forte e "Consulting" fino alinhado à direita, pingos do "i" quadrados.
+ * tone="light": letras brancas (fundos escuros/foto). tone="dark": letras navy (fundos claros).
+ */
+import logo from '../assets/logo/logo-paths.json';
+
+interface Props { tone?: 'light' | 'dark'; size?: 'sm' | 'md' | 'lg'; }
+const { tone = 'light', size = 'md' } = Astro.props;
+const heights = { sm: 34, md: 42, lg: 58 };
+const h = heights[size];
+const w = Math.round((h * logo.width) / logo.height);
+---
+<svg class:list={['logo', `logo--${tone}`]} viewBox={logo.viewBox} width={w} height={h} aria-hidden="true" focusable="false">
+  <path d={logo.bracket} class="logo__bracket" />
+  <path d={logo.name} />
+  <path d={logo.sub} />
+</svg>
+
+<style>
+  .logo { display: block; flex: none; fill: currentColor; }
+  .logo__bracket { fill: var(--mint); }
+  .logo--light { color: var(--white); }
+  .logo--dark { color: var(--navy); }
+</style>

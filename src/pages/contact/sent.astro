@@ -1,0 +1,18 @@
+---
+/** Confirmação para quem envia o formulário sem JavaScript (POST normal). noindex, fora do sitemap. */
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+<BaseLayout title="Message sent | D-Sci Consulting" description="Thank you for reaching out to D-Sci Consulting. We will get back to you to schedule your diagnostic meeting." path="/contact/sent/" headerTone="light" noindex>
+  <section class="section sentpage">
+    <div class="wrap">
+      <h1 class="h-1">Message sent.</h1>
+      <p class="lead">Thank you for reaching out. We will get back to you to schedule your diagnostic meeting.</p>
+      <a class="link-arrow" href="/how-we-work/#after-contact">See what happens next</a>
+    </div>
+  </section>
+</BaseLayout>
+<style>
+  .sentpage { padding-top: 180px; background: var(--alice); min-height: 70svh; }
+  .sentpage .wrap { display: grid; gap: 18px; }
+  .sentpage h1 { color: var(--navy); }
+</style>

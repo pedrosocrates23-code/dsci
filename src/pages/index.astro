@@ -1,0 +1,316 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import HeroMedia from '../components/HeroMedia.astro';
+import CtaBand from '../components/CtaBand.astro';
+import { PAGES } from '../config/pages';
+import { getEntry } from 'astro:content';
+import { graph, websiteNode, webPageNode, orgRef } from '../lib/schema';
+
+const meta = PAGES.home;
+const author = await getEntry('authors', 'jordana-andrade-santos');
+
+const agencies = [
+  ['FDA', 'Pre-IND · IND · CTD'],
+  ['ANVISA', 'Dossiers and submissions'],
+  ['ICH', 'M3(R2) and safety guidelines'],
+  ['OECD', 'Test guidelines'],
+  ['European Union', 'Reg. 1223/2009 · SCCS'],
+];
+const flow = ['Existing data', 'In silico and read-across', 'Gaps and assays', 'Study oversight', 'Regulatory documentation'];
+const services = [
+  { href: '/services/#nonclinical-strategy', title: 'Evidence-driven nonclinical strategy', text: 'From data collection to defining the assays that are truly needed.' },
+  { href: '/services/#study-waivers', title: 'Study waiver justifications', text: 'Scientific rationales to avoid repeating what the evidence already answers.' },
+  { href: '/services/#nonclinical-writing', title: 'Nonclinical writing', text: 'CTD modules and study reports ready for submission.' },
+  { href: '/services/#toxicological-assessment', title: 'Toxicological assessment of products', text: 'Safety assessment of medicines, cosmetics and ingredients.' },
+];
+const why = [
+  { n: '01', title: 'Data and document, together.', text: 'Study interpretation and regulatory writing are handled as one task, so every conclusion in the dossier traces back to how the data were generated.' },
+  { n: '02', title: 'NAMs with both feet on the ground.', text: 'We use non-animal methods where they answer the regulatory question, and we say clearly when a traditional study is still needed.' },
+  { n: '03', title: 'Focus on cost and timeline.', text: 'Every study waived or better designed is time and investment saved in your program.' },
+];
+
+const jsonLd = graph(
+  websiteNode(),
+  webPageNode({ path: meta.path, name: meta.title, description: meta.description, about: orgRef }),
+);
+---
+<BaseLayout title={meta.title} description={meta.description} path={meta.path} jsonLd={jsonLd} heroImage="home-hero">
+  <!-- HERO: foto de tela cheia por trás do menu; H1 gigante no meio, texto e botões alinhados à esquerda -->
+  <section class="hero on-dark">
+    <HeroMedia image="home-hero" position="65% center" />
+    <div class="hero__grid">
+      <div class="hero__copy">
+        <h1 class="h-display hero__title">Fewer studies.<br /><span class="hero__line2">The <span class="bracketed">right</span> studies.</span></h1>
+        <p class="hero__sub">D-Sci Consulting builds nonclinical strategies from the data that already exist, with non-animal methods and in silico approaches where applicable, and turns the result into documentation ready for the FDA, ANVISA and the European Union.</p>
+        <div class="hero__actions">
+          <span class="magnet-zone"><a class="btn" href="/contact/" data-magnetic>Request a proposal</a></span>
+          <a class="btn btn--ghost" href="/nams-strategy/">Explore the approach</a>
+        </div>
+      </div>
+      <!-- Agências e diretrizes dentro do banner: texto branco, sem fundo nem bordas, só a linha
+           divisória (estilo faixa de parceiros). Estática no desktop; no celular rola devagar. -->
+      <aside class="agencies" aria-labelledby="agencies-title">
+        <p id="agencies-title" class="agencies__title">Agencies and guidelines</p>
+        <div class="agencies__viewport">
+          <div class="agencies__track">
+            <dl class="agencies__list">
+              {agencies.map(([k, v]) => (
+                <div class="agencies__item"><dt>{k}</dt><dd>{v}</dd></div>
+              ))}
+            </dl>
+            <dl class="agencies__list agencies__list--clone" aria-hidden="true">
+              {agencies.map(([k, v]) => (
+                <div class="agencies__item"><dt>{k}</dt><dd>{v}</dd></div>
+              ))}
+            </dl>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+  </section>
+
+  <!-- CREDENCIAIS: ficha técnica em linha (frases da tabela 9.1 do plano, sem experiência atribuída à empresa) -->
+  <section class="specs on-dark" aria-label="At a glance">
+    <div class="wrap specs__row">
+      <div class="specs__item" data-reveal><p class="specs__k">PhD</p><p>Technical content authored by a PhD in Pharmaceutical Sciences</p></div>
+      <div class="specs__item" data-reveal><p class="specs__k">Pre-IND / IND</p><p>Drafting of CTD nonclinical modules for FDA submissions</p></div>
+      <div class="specs__item" data-reveal><p class="specs__k">Remote</p><p>Meetings and documents in English or Portuguese</p></div>
+    </div>
+  </section>
+
+  <!-- FLUXO: 5 etapas numa trilha que se desenha com o scroll -->
+  <section class="section flow">
+    <div class="wrap">
+      <div class="flow__head">
+        <h2 class="h-1" data-reveal>From existing evidence<br />to the dossier.</h2>
+      </div>
+      <ol class="flow__track" data-count-steps>
+        <span class="flow__line" aria-hidden="true"><span class="flow__line-fill" data-draw></span></span>
+        {flow.map((s, i) => (
+          <li class="flow__step" data-step>
+            <span class="flow__n">{i + 1}</span>
+            <span class="flow__t">{s}</span>
+          </li>
+        ))}
+      </ol>
+      <a class="link-arrow flow__more" href="/nams-strategy/#approach">See each step in detail</a>
+    </div>
+  </section>
+
+  <!-- DESTAQUE FIH: tipografia vazada + cartão -->
+  <section class="section section--alice featured">
+    <div class="wrap">
+      <article class="featured__card" data-reveal>
+        <div class="featured__head">
+          <h2 class="h-2">From the lab to the first dose in humans, with the right evidence.</h2>
+        </div>
+        <div class="featured__body">
+          <p>We define the minimum set of nonclinical evidence needed for first-in-human (FIH) administration, building on published data and qualified non-animal methods. Fewer redundant studies, less animal use and a shorter path to the clinic, with a solid scientific rationale for the agencies.</p>
+          <a class="btn btn--navy" href="/nams-strategy/#fih">See the FIH approach</a>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- SERVIÇOS: lista editorial -->
+  <section class="section services-list">
+    <div class="wrap">
+      <div class="services-list__head">
+        <h2 class="h-1" data-reveal>What we do.</h2>
+        <a class="link-arrow" href="/services/">See all services</a>
+      </div>
+      <ul class="rows">
+        {services.map((s, i) => (
+          <li data-reveal>
+            <a class="row" href={s.href}>
+              <span class="row__n">{String(i + 1).padStart(2, '0')}</span>
+              <span class="row__title">{s.title}</span>
+              <span class="row__text">{s.text}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <!-- POR QUE: título fixo à esquerda, declarações numeradas à direita -->
+  <section class="section section--navy why on-dark">
+    <div class="wrap why__grid">
+      <div class="why__sticky">
+        <h2 class="h-1">Whoever understands the data writes the document.</h2>
+      </div>
+      <ol class="why__list">
+        {why.map((w) => (
+          <li data-reveal>
+            <span class="why__n" aria-hidden="true">{w.n}</span>
+            <h3 class="h-3">{w.title}</h3>
+            <p>{w.text}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <!-- IMPRENSA ESPECIALIZADA: artigos assinados pela autora (HTML; fora do schema nesta fase) -->
+  {author && author.data.externalArticles.length > 0 && (
+    <section class="section press">
+      <div class="wrap">
+        <h2 class="h-2" data-reveal>Published in the specialist press.</h2>
+        <ul class="press__list">
+          {author.data.externalArticles.map((a) => (
+            <li data-reveal>
+              <a class="press__item" href={a.url} target="_blank" rel="noopener">
+                <span class="press__meta">{a.outlet} · {a.year}</span>
+                <span class="press__title">{a.title}</span>
+                <span class="press__by">By {author.data.name}, {author.data.honorificSuffix}</span>
+                
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )}
+
+  <CtaBand title="Have a program on its way to the clinic?" text="Tell us about your challenge and receive a tailored proposal." cta="Request a proposal" />
+</BaseLayout>
+
+<style>
+  /* ---------- HERO ---------- */
+  .hero { position: relative; min-height: max(720px, 100svh); display: flex; flex-direction: column; color: #fff; isolation: isolate; overflow-x: clip; }
+  /* Mesma grade do header (1240px): o texto começa na mesma linha da logo e da faixa de agências. */
+  .hero__grid {
+    position: relative; z-index: 1; flex: 1; width: min(var(--wrap), 100% - 2 * var(--gutter)); margin-inline: auto;
+    /* O hero ocupa a 1ª dobra inteira: título e botões centralizados no espaço livre e a faixa de
+       agências presa na base. A seção seguinte só aparece a partir da 2ª dobra. */
+    display: flex; flex-direction: column;
+    padding: 132px 0 clamp(28px, 4.5vh, 44px);
+  }
+  .hero__copy { display: grid; justify-items: start; margin-block: auto; }
+  /* Tipografia em escala de tela: alinhada à esquerda da grade, cresce só para a direita,
+     podendo passar da grade até a borda da tela (menos o respiro lateral). */
+  .hero__title {
+    color: #fff; font-size: clamp(3.1rem, 7.6vw, 9.2rem); line-height: 0.92; letter-spacing: -0.045em; font-weight: 600;
+    width: max-content; max-width: calc((100vw + min(var(--wrap), 100vw - 2 * var(--gutter))) / 2 - var(--gutter));
+  }
+  @media (max-width: 640px) { .hero__title { width: auto; max-width: none; } }
+  .hero__title .bracketed::before, .hero__title .bracketed::after { border-width: 0.055em; }
+  .hero__line2 { display: inline-block; }
+  .hero__sub { max-width: 58ch; margin-top: clamp(28px, 3.5vw, 44px); font-size: clamp(1.05rem, 1.3vw, 1.22rem); color: rgba(255,255,255,.88); }
+  .hero__actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 30px; }
+  @media (max-width: 640px) { .hero__copy { justify-items: stretch; } .hero__actions { flex-direction: column; } }
+
+  /* Agências e diretrizes: parte do banner, texto branco, só uma linha divisória em cima. */
+  .agencies {
+    margin-top: clamp(56px, 10vh, 120px); padding-top: 24px; border-top: 1px solid rgba(255, 255, 255, 0.22);
+    display: grid; grid-template-columns: auto minmax(0, 1fr); gap: clamp(24px, 4vw, 56px); align-items: start;
+  }
+  .agencies__title { font-family: var(--f-ui); font-size: 0.85rem; font-weight: 500; color: rgba(255, 255, 255, 0.7); padding-top: 2px; white-space: nowrap; }
+  .agencies__viewport { min-width: 0; }
+  .agencies__list { margin: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: clamp(16px, 2.5vw, 32px); }
+  .agencies__list--clone { display: none; }
+  .agencies dt { font-family: var(--f-display); font-weight: 600; font-size: 1.02rem; letter-spacing: -0.01em; color: #fff; }
+  .agencies dd { margin: 4px 0 0; font-size: 0.86rem; line-height: 1.35; color: rgba(255, 255, 255, 0.72); }
+  @media (max-width: 1080px) {
+    .agencies { grid-template-columns: 1fr; gap: 14px; }
+    /* Celular/tablet: as 5 não cabem; a faixa rola sozinha, devagar, em loop contínuo. */
+    .agencies__viewport { overflow: hidden; margin-inline: calc(-1 * var(--gutter)); }
+    .agencies__track { display: flex; width: max-content; animation: agencies-marquee 42s linear infinite; }
+    .agencies__viewport:hover .agencies__track, .agencies__viewport:focus-within .agencies__track { animation-play-state: paused; }
+    .agencies__list, .agencies__list--clone { display: flex; gap: 0; }
+    .agencies__item { flex: 0 0 auto; width: 200px; padding: 0 20px; }
+  }
+  @keyframes agencies-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  @media (max-width: 1080px) and (prefers-reduced-motion: reduce) {
+    .agencies__viewport { overflow-x: auto; scrollbar-width: none; }
+    .agencies__track { animation: none; }
+    .agencies__list--clone { display: none; }
+  }
+
+  /* ---------- SPECS ---------- */
+  .specs { background: var(--navy-deep); }
+  .specs__row { display: grid; grid-template-columns: repeat(3, 1fr); }
+  .specs__item { padding: 34px 28px 34px 0; border-right: 1px solid var(--line-dark); }
+  .specs__item + .specs__item { padding-left: 28px; }
+  .specs__item:last-child { border-right: 0; }
+  .specs__k { font-family: var(--f-display); font-size: clamp(1.6rem, 2.6vw, 2.2rem); font-weight: 600; color: var(--mint); letter-spacing: -0.02em; margin-bottom: 6px; }
+  .specs__item p:last-child { color: rgba(255,255,255,.8); max-width: 30ch; }
+  @media (max-width: 760px) {
+    .specs__row { grid-template-columns: 1fr; }
+    .specs__item, .specs__item + .specs__item { padding: 22px 0; border-right: 0; border-bottom: 1px solid var(--line-dark); }
+  }
+
+  /* ---------- FLOW ---------- */
+  .flow__head { display: grid; gap: 14px; margin-bottom: 56px; }
+  .flow__track { position: relative; list-style: none; display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+  /* Termina sob o quadro 5: a última coluna, menos meio quadro (5 colunas, 4 vãos de 16px). */
+  .flow__line { position: absolute; left: 0; right: calc((100% - 64px) / 5 - 28px); top: 27px; height: 2px; background: var(--line); }
+  .flow__line-fill { position: absolute; inset: 0; background: var(--mint); transform-origin: left center; }
+  .flow__step { position: relative; display: grid; gap: 14px; }
+  .flow__n {
+    width: 56px; height: 56px; display: grid; place-items: center; border-radius: var(--r);
+    background: var(--white); border: 2px solid var(--navy); font-family: var(--f-display); font-weight: 600; font-size: 1.2rem; color: var(--navy);
+  }
+  .flow__t { font-family: var(--f-display); font-weight: 600; font-size: 1.1rem; color: var(--navy); max-width: 14ch; }
+  .flow__more { margin-top: 40px; }
+  @media (max-width: 860px) {
+    .flow__track { grid-template-columns: 1fr; gap: 18px; }
+    .flow__line { left: 27px; right: auto; top: 28px; bottom: 28px; width: 2px; height: auto; }
+    .flow__line-fill { transform-origin: top center; }
+    .flow__step { grid-template-columns: 56px 1fr; align-items: center; }
+  }
+
+  /* ---------- FEATURED ---------- */
+  .featured__card {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(28px, 4vw, 56px); align-items: center;
+    background: var(--white); border-left: 6px solid var(--baltic); border-radius: var(--r);
+    padding: clamp(32px, 4.5vw, 56px) clamp(28px, 4.5vw, 56px); box-shadow: var(--shadow);
+  }
+  .featured__head { display: grid; gap: 16px; }
+  .featured__body { display: grid; gap: 22px; justify-items: start; }
+  .featured__body p { color: var(--muted); font-size: 1.08rem; }
+  .featured__card h2 { color: var(--navy); max-width: 16ch; }
+  @media (max-width: 860px) { .featured__card { grid-template-columns: 1fr; align-items: start; } }
+
+  /* ---------- SERVICES LIST ---------- */
+  .services-list__head { display: flex; justify-content: space-between; align-items: end; gap: 20px; margin-bottom: 36px; flex-wrap: wrap; }
+  .rows { list-style: none; border-top: 1px solid var(--line); }
+  .row {
+    display: grid; grid-template-columns: 64px minmax(0, 1.1fr) minmax(0, 1fr); gap: 24px; align-items: center;
+    padding: 28px 8px; border-bottom: 1px solid var(--line); text-decoration: none; color: var(--ink);
+    transition: background 0.25s;
+  }
+  /* Hover sem mexer no layout (antes o padding mudava, a descrição quebrava linha e a página
+     inteira pulava): só o fundo muda; número e título deslizam por transform. */
+  .row:hover { background: var(--alice); }
+  .row__n, .row__title { transition: transform 0.35s var(--ease-out); }
+  .row:hover .row__n, .row:hover .row__title { transform: translateX(10px); }
+  .row__n { font-family: var(--f-ui); font-size: 0.85rem; color: var(--mint-ink); font-weight: 600; }
+  .row__title { font-family: var(--f-display); font-weight: 600; font-size: clamp(1.15rem, 1.8vw, 1.5rem); color: var(--navy); letter-spacing: -0.02em; }
+  .row__text { color: var(--muted); }
+  @media (max-width: 760px) { .row { grid-template-columns: 40px 1fr; } .row__text { grid-column: 2; } }
+
+  /* ---------- WHY ---------- */
+  .why__grid { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 64px; align-items: start; }
+  .why__sticky { position: sticky; top: 120px; display: grid; gap: 16px; }
+  .why__list { list-style: none; display: grid; gap: 0; }
+  .why__list li { padding: 32px 0; border-top: 1px solid var(--line-dark); display: grid; gap: 10px; }
+  .why__n { font-family: var(--f-ui); font-weight: 600; font-size: 0.9rem; letter-spacing: 0.08em; color: var(--mint); }
+  .why__list p { color: rgba(255,255,255,.8); max-width: 52ch; }
+  @media (max-width: 860px) { .why__grid { grid-template-columns: 1fr; gap: 24px; } .why__sticky { position: static; } }
+
+  /* ---------- PRESS ---------- */
+  .press .h-2 { margin: 12px 0 32px; color: var(--navy); }
+  .press__list { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .press__item {
+    position: relative; display: grid; gap: 10px; height: 100%; padding: 28px;
+    border: 1px solid var(--line); border-radius: var(--r); text-decoration: none; color: var(--ink);
+    transition: border-color 0.2s, transform 0.3s var(--ease-out), box-shadow 0.3s;
+  }
+  .press__item:hover { border-color: var(--baltic); transform: translateY(-3px); box-shadow: var(--shadow); }
+  .press__meta { font-family: var(--f-ui); font-size: 0.8rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--mint-ink); }
+  .press__title { font-family: var(--f-display); font-weight: 600; font-size: 1.3rem; color: var(--navy); line-height: 1.25; }
+  .press__by { color: var(--muted); font-size: 0.95rem; }
+  @media (max-width: 760px) { .press__list { grid-template-columns: 1fr; } }
+</style>

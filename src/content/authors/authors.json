@@ -1,0 +1,20 @@
+[
+  {
+    "id": "jordana-andrade-santos",
+    "name": "Jordana Andrade Santos",
+    "honorificSuffix": "PhD",
+    "orcid": "https://orcid.org/0000-0001-6492-1771",
+    "openalex": "https://openalex.org/A5018275308",
+    "bio": "Jordana Andrade Santos is a toxicologist with a PhD in Pharmaceutical Sciences from the Federal University of Goiás (UFG), Brazil. Her research covers alternatives to animal testing, including a research period on organ-on-chip systems at TissUse GmbH in Berlin.",
+    "alumniOf": { "name": "Federal University of Goiás", "wikidata": "https://www.wikidata.org/wiki/Q7894375" },
+    "credentials": [
+      { "group": "Education", "items": ["PhD in Pharmaceutical Sciences (UFG)", "MSc in Physiological Sciences, with a focus on reproductive toxicology (UFG)", "Specialization in Industrial Toxicology (in progress)", "Regulatory Affairs training (120 h)"] },
+      { "group": "Scientific community", "items": ["Member of the Brazilian Society of Toxicology (SBTox)", "Secretary of the Young Toxicologists Committee (CJTox/SBTox)", "Reviewer for PLOS One", "Articles in international journals and in the specialist press"] },
+      { "group": "Recognition", "items": ["PETA Science Consortium International: Award to Attend Training on In Vitro Lung Models (2023)", "Selected in the Natura · IFSCC Scientific Call (2024)", "Work presented at the 13th World Congress on Alternatives (2025)", "Honorable mention at the 1st International Digital Congress on 3D Biofabrication"] }
+    ],
+    "externalArticles": [
+      { "outlet": "Drug Discovery Online", "year": 2026, "title": "New Approach Methods in Practice: Where Are We Today?", "url": "https://www.drugdiscoveryonline.com/doc/new-approach-methods-in-practice-where-are-we-today-0001" },
+      { "outlet": "Drug Delivery Leader", "year": 2026, "title": "Biomaterials in Ophthalmology Are Reshaping Ocular Drug Delivery", "url": "https://www.drugdeliveryleader.com/doc/biomaterials-in-ophthalmology-are-reshaping-ocular-drug-delivery-0001" }
+    ]
+  }
+]

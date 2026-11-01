@@ -1,0 +1,54 @@
+---
+/**
+ * Fundo de tela cheia do hero, por trás do header e da logo (pedido da usuária).
+ * É o candidato a LCP: <Picture> em AVIF/WebP, eager + fetchpriority high, srcset por largura.
+ */
+import { Picture } from 'astro:assets';
+import { getImage, IMAGE_ALT, HERO_WIDTHS, HERO_QUALITY, type ImageKey } from '../lib/images';
+
+interface Props { image: ImageKey; position?: string; }
+const { image, position = 'center' } = Astro.props;
+const src = getImage(image);
+---
+<div class="hero-media" aria-hidden={src ? undefined : 'true'}>
+  {src ? (
+    <Picture
+      src={src}
+      alt={IMAGE_ALT[image]}
+      formats={['avif', 'webp']}
+      fallbackFormat="jpg"
+      quality={HERO_QUALITY}
+      widths={HERO_WIDTHS}
+      sizes="100vw"
+      loading="eager"
+      fetchpriority="high"
+      decoding="async"
+      class="hero-media__img"
+      style={`object-position:${position}`}
+    />
+  ) : (
+    <div class="hero-media__fallback"></div>
+  )}
+  <div class="hero-media__scrim"></div>
+</div>
+
+<style>
+  .hero-media { position: absolute; inset: 0; z-index: 0; overflow: hidden; background: var(--navy-deep); }
+  .hero-media :global(picture), .hero-media :global(img) { width: 100%; height: 100%; }
+  .hero-media :global(img) { object-fit: cover; }
+  .hero-media__fallback {
+    position: absolute; inset: 0;
+    background:
+      repeating-linear-gradient(90deg, transparent 0 79px, rgba(255,255,255,.04) 79px 80px),
+      repeating-linear-gradient(0deg, transparent 0 79px, rgba(255,255,255,.04) 79px 80px),
+      var(--navy);
+  }
+  /* Véu de leitura: navy por cima da foto. A base fica escura em toda a largura (é onde o
+     título e os botões ficam), e a lateral esquerda um pouco mais densa que a direita. */
+  .hero-media__scrim {
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(0deg, rgba(6,27,54,.92) 0%, rgba(6,27,54,.74) 32%, rgba(6,27,54,.52) 62%, rgba(6,27,54,.3) 100%),
+      linear-gradient(90deg, rgba(6,27,54,.5) 0%, rgba(6,27,54,.18) 55%, rgba(6,27,54,0) 100%);
+  }
+</style>

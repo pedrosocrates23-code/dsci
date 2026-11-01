@@ -1,0 +1,19 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout title="Page not found | D-Sci Consulting" description="The page you are looking for does not exist." path="/404/" noindex>
+  <section class="nf on-dark">
+    <div class="wrap">
+      <h1 class="h-1">This page does not exist.</h1>
+      <div class="nf__links">
+        <a class="btn" href="/">Go to the home page</a>
+        <a class="btn btn--ghost" href="/contact/">Contact</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+<style>
+  .nf { background: var(--navy); min-height: 80svh; display: flex; align-items: center; padding: 160px 0 80px; }
+  .nf .wrap { display: grid; gap: 20px; }
+  .nf__links { display: flex; gap: 12px; flex-wrap: wrap; }
+</style>

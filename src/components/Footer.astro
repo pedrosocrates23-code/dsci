@@ -1,0 +1,54 @@
+---
+import Logo from './Logo.astro';
+import { BRAND, CONTACT, NAV } from '../config/site';
+
+const year = 2026;
+---
+<footer class="site-footer on-dark">
+  <div class="wrap site-footer__grid">
+    <div class="site-footer__brand">
+      <Logo tone="light" size="lg" />
+      <p class="site-footer__tagline">{BRAND.tagline}</p>
+    </div>
+
+    <nav aria-label="Footer" class="site-footer__nav">
+      <p class="site-footer__title">Site</p>
+      <ul>
+        <li><a href="/">Home</a></li>
+        {NAV.map((i) => <li><a href={i.href}>{i.label}</a></li>)}
+        <li><a href="/contact/">Contact</a></li>
+      </ul>
+    </nav>
+
+    <div class="site-footer__contact">
+      <p class="site-footer__title">Contact</p>
+      <ul>
+        {CONTACT.email && <li><a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a></li>}
+        {CONTACT.linkedin && <li><a href={CONTACT.linkedin} rel="me noopener" target="_blank">LinkedIn</a></li>}
+        <li>{BRAND.location} · {BRAND.service.toLowerCase()}</li>
+        <li><a href="/contact/">Request a proposal</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="wrap site-footer__legal">
+    <p>© {year} {BRAND.name}{CONTACT.cnpj && <> · CNPJ {CONTACT.cnpj}</>}</p>
+    <a href="/privacy-policy/">Privacy policy (LGPD)</a>
+  </div>
+</footer>
+
+<style>
+  .site-footer { background: var(--navy-deep); padding: 72px 0 28px; font-size: 0.97rem; }
+  .site-footer__grid { display: grid; grid-template-columns: 1.6fr 1fr 1.2fr; gap: 48px; }
+  .site-footer__tagline { margin-top: 18px; max-width: 34ch; color: rgba(255, 255, 255, 0.72); }
+  .site-footer__title { font-family: var(--f-ui); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mint); margin-bottom: 14px; }
+  .site-footer ul { list-style: none; display: grid; gap: 8px; color: rgba(255, 255, 255, 0.78); }
+  .site-footer a { color: rgba(255, 255, 255, 0.86); text-decoration: none; }
+  .site-footer a:hover { color: #fff; text-decoration: underline; }
+  .site-footer__legal {
+    margin-top: 56px; padding-top: 22px; border-top: 1px solid var(--line-dark);
+    display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    font-size: 0.875rem; color: rgba(255, 255, 255, 0.62);
+  }
+  @media (max-width: 860px) { .site-footer__grid { grid-template-columns: 1fr; gap: 36px; } }
+</style>

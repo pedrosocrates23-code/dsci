@@ -1,0 +1,221 @@
+---
+/**
+ * Header fixo sobre o hero, no padrão do test-beo (logo à esquerda, barra de navegação
+ * flutuante à direita), redesenhado em "vidro": cantos quase retos, blur + saturação,
+ * borda de luz e tipografia do sistema (aspecto Apple).
+ *
+ * Desktop: ao rolar, a logo sai e o item "Home" entra na barra.
+ * Celular/tablet (até 960px): menu de painéis do vídeo de referência (src/scripts/menu.ts):
+ * links grandes, cartão "Request a proposal" e barra de rodapé, que entram pela direita e
+ * caem para fora da tela ao fechar.
+ */
+import Logo from './Logo.astro';
+import { NAV, BRAND, CONTACT } from '../config/site';
+
+interface Props { tone?: 'image' | 'light'; current?: string; }
+const { tone = 'image', current = Astro.url.pathname } = Astro.props;
+const isCurrent = (href: string) => current === href || (href !== '/' && current.startsWith(href));
+const mobileLinks = [{ href: '/', label: 'Home' }, ...NAV];
+---
+<header class:list={['site-header', `site-header--${tone}`]} data-header>
+  <div class="site-header__inner">
+    <a href="/" class="site-header__logo" aria-label="D-Sci Consulting, home">
+      <Logo tone={tone === 'light' ? 'dark' : 'light'} size="md" />
+    </a>
+
+    <nav class="glassbar" aria-label="Main">
+      <a href="/" class="glassbar__home" tabindex="-1"><span>Home</span></a>
+      {NAV.map((item) => (
+        <a href={item.href} class:list={['glassbar__link', { 'is-active': isCurrent(item.href) }]} aria-current={isCurrent(item.href) ? 'page' : undefined}>
+          {item.label}
+        </a>
+      ))}
+      <button type="button" class="glassbar__icon" data-search-open aria-label="Search the site (Ctrl+K)"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg></button>
+      <span class="magnet-zone">
+        <a href="/contact/" class="glassbar__cta" data-wiggle-once aria-current={isCurrent('/contact/') ? 'page' : undefined}>
+          Request a proposal
+        </a>
+      </span>
+    </nav>
+
+    <div class="site-header__actions">
+      <button type="button" class="msearch" data-search-open aria-label="Search the site"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg></button>
+    <button class="burger" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="Open menu" data-burger>
+      <span class="burger__bar" data-bar></span>
+      <span class="burger__bar" data-bar></span>
+      <span class="burger__bar" data-bar></span>
+    </button>
+    </div>
+  </div>
+</header>
+
+<!-- Menu do celular/tablet: 3 painéis empilhados -->
+<div class="mnav" id="mobile-menu" role="dialog" aria-modal="true" aria-label="Menu" data-mnav hidden>
+  <div class="mnav__backdrop" data-mnav-backdrop></div>
+  <div class="mnav__stack">
+    <nav class="mnav__panel mnav__panel--links" aria-label="Mobile" data-mnav-panel>
+      <ul>
+        {mobileLinks.map((item) => (
+          <li><a href={item.href} data-mnav-link class:list={{ 'is-active': isCurrent(item.href) && (item.href !== '/' || current === '/') }} aria-current={isCurrent(item.href) && (item.href !== '/' || current === '/') ? 'page' : undefined}>{item.label}</a></li>
+        ))}
+      </ul>
+    </nav>
+    <div class="mnav__panel mnav__panel--cta" data-mnav-panel>
+      <p class="mnav__cta-title">Have a program on its way to the clinic?</p>
+      <p class="mnav__cta-text">No-cost diagnostic meeting. NDA available before we talk.</p>
+      <a class="btn btn--navy mnav__cta-btn" href="/contact/">Request a proposal</a>
+    </div>
+    <div class="mnav__panel mnav__panel--foot" data-mnav-panel>
+      <span>{BRAND.location} · remote service</span>
+      <span class="mnav__foot-links">
+        {CONTACT.linkedin && <a href={CONTACT.linkedin} rel="me noopener" target="_blank">LinkedIn</a>}
+        {CONTACT.email && <a href={`mailto:${CONTACT.email}`}>Email</a>}
+        <a href="/privacy-policy/">Privacy</a>
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- Comportamento (rolagem, menu do celular) em src/scripts/site.ts, carregado no fim da página. -->
+
+<style>
+  .site-header { position: fixed; inset: 0 0 auto; z-index: 60; padding: 18px 0; pointer-events: none; }
+  .site-header__inner {
+    width: min(var(--wrap), 100% - 2 * var(--gutter)); margin-inline: auto;
+    display: flex; align-items: center; justify-content: space-between; gap: 24px;
+  }
+  .site-header__logo, .glassbar, .burger, .msearch { pointer-events: auto; }
+  .site-header__actions { display: contents; }
+  .site-header__logo { text-decoration: none; transition: opacity 0.3s, visibility 0.3s; }
+  .is-scrolled .site-header__logo { opacity: 0; visibility: hidden; }
+
+  /* ---------- A barra de vidro (desktop) ---------- */
+  .glassbar {
+    display: flex; align-items: center; gap: 2px;
+    padding: 6px 6px 6px 8px;
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(22px) saturate(170%);
+    backdrop-filter: blur(22px) saturate(170%);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    box-shadow: var(--glass-shine), 0 12px 40px -18px rgba(6, 27, 54, 0.55);
+    font-family: var(--f-ui);
+    transition: background 0.3s;
+  }
+  .site-header--light .glassbar, .is-scrolled .glassbar { background: var(--glass-bg-strong); }
+  .glassbar a { text-decoration: none; }
+  .glassbar__link, .glassbar__home span {
+    display: inline-flex; align-items: center; padding: 9px 14px; border-radius: 5px;
+    font-size: 14.5px; font-weight: 500; letter-spacing: -0.01em; color: rgba(255, 255, 255, 0.86);
+    transition: color 0.18s, background 0.18s;
+  }
+  .glassbar__link:hover { color: #fff; background: rgba(255, 255, 255, 0.12); }
+  .glassbar__link.is-active { color: #fff; background: rgba(255, 255, 255, 0.14); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12); }
+  .glassbar__home {
+    display: grid; grid-template-columns: 0fr; overflow: hidden; opacity: 0; visibility: hidden; margin-right: -2px;
+    transition: grid-template-columns 0.45s var(--ease-out), opacity 0.2s, visibility 0s linear 0.45s, margin 0.45s var(--ease-out);
+  }
+  .glassbar__home span { min-width: 0; white-space: nowrap; color: #fff; }
+  .is-scrolled .glassbar__home {
+    grid-template-columns: 1fr; opacity: 1; visibility: visible; margin-right: 0;
+    transition: grid-template-columns 0.45s var(--ease-out), opacity 0.3s 0.12s, visibility 0s, margin 0.45s var(--ease-out);
+  }
+  .glassbar__home:hover span { background: rgba(255, 255, 255, 0.12); }
+  .glassbar__icon {
+    display: inline-grid; place-items: center; width: 38px; height: 38px; margin-left: 2px; border-radius: 5px; border: 0; background: none; cursor: pointer;
+    transition: background 0.18s;
+  }
+  .glassbar__icon svg, .msearch svg { width: 18px; height: 18px; fill: none; stroke: rgba(255, 255, 255, 0.88); stroke-width: 2; stroke-linecap: round; }
+  .glassbar__icon:hover { background: rgba(255, 255, 255, 0.12); }
+  .glassbar__icon:hover svg { stroke: #fff; }
+  .glassbar__cta {
+    display: inline-flex; align-items: center; margin-left: 6px; padding: 9px 16px; border-radius: 5px;
+    font-size: 14.5px; font-weight: 600; letter-spacing: -0.01em;
+    color: var(--navy-deep); background: var(--mint);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35); will-change: transform;
+  }
+  .glassbar__cta:hover { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 8px 24px -10px rgba(0, 200, 150, 0.8); }
+
+  /* ---------- Botão do menu (celular/tablet) ---------- */
+  .burger, .msearch { display: none; }
+  .mnav { display: none; }
+
+  @media (max-width: 960px) {
+    .site-header { padding: 12px 0; }
+    .site-header__inner { width: calc(100% - 32px); }
+    .is-scrolled .site-header__logo { opacity: 1; visibility: visible; }
+    .site-header::before {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background: rgba(6, 27, 54, 0.55); -webkit-backdrop-filter: blur(18px) saturate(160%); backdrop-filter: blur(18px) saturate(160%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1); opacity: 0; transition: opacity 0.3s;
+    }
+    .is-scrolled::before, .site-header--light::before { opacity: 1; }
+    .is-open::before { opacity: 0; }
+    .site-header { transition: padding 0.35s var(--ease-out); }
+    .site-header__inner { transition: width 0.35s var(--ease-out); }
+    .site-header.is-open { padding-top: 32px; }
+    .site-header.is-open .site-header__inner { width: calc(100% - 64px); }
+    .site-header--light .site-header__logo :global(.logo) { color: var(--white); }
+    .glassbar { display: none; }
+    .site-header__actions { display: flex; align-items: center; gap: 8px; }
+    .msearch {
+      display: inline-grid; place-items: center; width: 44px; height: 42px; border-radius: var(--r); cursor: pointer;
+      background: rgba(255, 255, 255, 0.1); border: 1px solid var(--glass-border);
+      -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    }
+    .is-open .msearch { opacity: 0; pointer-events: none; }
+
+    .burger {
+      position: relative; display: grid; place-content: center; gap: 4.4px; width: 44px; height: 42px; border-radius: var(--r); cursor: pointer;
+      background: rgba(255, 255, 255, 0.1); border: 1px solid var(--glass-border); color: #fff;
+      -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); transition: background 0.3s, color 0.3s;
+    }
+    .burger__bar { display: block; width: 20px; height: 1.6px; background: currentColor; border-radius: 2px; }
+    .is-open .burger { background: var(--navy); color: #fff; border-color: transparent; }
+
+    /* ---------- Painéis (tokens do projeto: raio var(--r), respiro 16/24px, paleta da marca) ---------- */
+    .mnav { display: block; position: fixed; inset: 0; z-index: 55; }
+    .mnav[hidden] { display: none; }
+    .mnav__backdrop { position: absolute; inset: 0; background: rgba(6, 27, 54, 0.6); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+    /* Painéis a 12px da borda da tela, respiro interno de 20px: a logo e o X do header
+       ficam a 32px (12 + 20), alinhados com os links do 1º painel. */
+    .mnav__stack {
+      position: absolute; top: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); left: 12px;
+      display: grid; grid-template-rows: 1fr auto auto; gap: 8px; pointer-events: none;
+    }
+    .mnav__panel { pointer-events: auto; border-radius: var(--r); will-change: transform; }
+
+    .mnav__panel--links { background: var(--alice); padding: 92px 20px 20px; overflow-y: auto; }
+    .mnav__panel--links ul { list-style: none; display: grid; }
+    .mnav__panel--links li + li { border-top: 1px solid var(--line); }
+    .mnav__panel--links a {
+      display: block; padding: 12px 0; text-decoration: none;
+      font-family: var(--f-display); font-weight: 600; font-size: clamp(1.6rem, 6.6vw, 2.2rem); letter-spacing: -0.03em; line-height: 1.15;
+      color: var(--navy); transition: color 0.2s;
+    }
+    .mnav__panel--links a:hover, .mnav__panel--links a.is-active { color: var(--baltic); }
+
+    /* Proposta: mesmo padrão da faixa de chamada do site (título, apoio e botão mint) */
+    .mnav__panel--cta { display: grid; gap: 8px; padding: 20px; background: var(--mint); color: var(--navy-deep); }
+    .mnav__cta-title { font-family: var(--f-display); font-weight: 600; font-size: 1.3rem; line-height: 1.2; letter-spacing: -0.02em; }
+    .mnav__cta-text { font-size: 0.98rem; color: var(--navy); }
+    .mnav__cta-btn { width: 100%; margin-top: 10px; }
+
+    .mnav__panel--foot {
+      display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 20px;
+      background: var(--baltic); color: #fff; font-family: var(--f-ui); font-size: 0.85rem;
+    }
+    .mnav__foot-links { display: flex; gap: 16px; }
+    .mnav__foot-links a { color: #fff; text-decoration: none; }
+    .mnav__foot-links a:hover { text-decoration: underline; }
+  }
+
+  /* Celular: o painel claro passa por baixo da logo, que fica navy enquanto o menu está aberto */
+  @media (max-width: 640px) {
+    .is-open .site-header__logo :global(.logo) { color: var(--navy); }
+  }
+  /* Tablet: o menu vira uma coluna à direita, como no vídeo */
+  @media (min-width: 641px) and (max-width: 960px) {
+    .mnav__stack { left: auto; width: min(460px, calc(100% - 32px)); }
+  }
+</style>

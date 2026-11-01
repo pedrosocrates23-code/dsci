@@ -1,0 +1,5 @@
+[
+  { "id": "nonclinical-pharma", "name": "Nonclinical pharma", "market": "United States and Europe", "intro": null, "order": 1 },
+  { "id": "eu-cosmetics", "name": "EU cosmetics", "market": "Europe", "intro": null, "order": 2 },
+  { "id": "nams-oecd", "name": "NAMs and OECD", "market": "All markets", "intro": null, "order": 3 }
+]

@@ -1,0 +1,232 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import HeroMedia from '../components/HeroMedia.astro';
+import CtaBand from '../components/CtaBand.astro';
+import Icon from '../components/Icon.astro';
+import { PAGES } from '../config/pages';
+import { FAQ as faq } from '../config/faq';
+import { graph, websiteNode, webPageNode, breadcrumbNode, faqNode, orgRef } from '../lib/schema';
+
+const meta = PAGES.howWeWork;
+const crumbs = [{ name: 'Home', path: '/' }, { name: 'How we work', path: meta.path }];
+
+const phases = [
+  { t: 'Diagnosis', d: 'An initial meeting, at no cost and under confidentiality, to understand the program and the regulatory objective.' },
+  { t: 'Proposal', d: 'Scope, deliverables, timeline and fee defined for each project.' },
+  { t: 'Execution', d: 'Agreed checkpoints and direct communication with the specialist.' },
+  { t: 'Delivery and support', d: 'A reviewed final document and support for questions about the delivered content.' },
+];
+// Processo do contato à proposta (PROCESSO-DE-CONTRATACAO, 2.2). P1: sem prazo de resposta publicado.
+const after = [
+  { t: 'You send a short message.', d: 'Tell us about the product and the regulatory goal. No confidential data is needed at this stage.', send: 'Your name and email, then your area of activity and a short message', get: 'An on-screen confirmation with these steps' },
+  { t: 'We reply to schedule.', d: 'We read your request and come back with times for a diagnostic meeting.', send: 'Your preferred time', get: 'The meeting invitation' },
+  { t: 'NDA first, if you need it.', d: 'If you want to discuss product data in the first meeting, we sign a mutual NDA before it. Otherwise the first conversation stays non-confidential.', send: 'Your NDA request', get: 'A mutual NDA to sign' },
+  { t: 'Diagnostic meeting, at no cost.', d: 'A video meeting to understand your program, target agency, existing data and timeline.', send: 'Information about the program', get: 'A first reading: whether the case fits, what kind of project makes sense and which data are needed to scope it' },
+  { t: 'Data for scoping, under NDA.', d: 'If needed, you share the documents that let us size the work.', send: 'Existing documents and data', get: 'Confirmation of receipt and, if anything is missing, a list of what is missing' },
+  { t: 'A written proposal.', d: 'Scope, deliverables, timeline, fee and engagement model, with assumptions and what is out of scope.', send: 'Nothing', get: 'The proposal in writing' },
+];
+const principles = [
+  { icon: 'lock', t: 'Confidentiality from the first contact', d: 'A non-disclosure agreement (NDA) before any exchange of product data.' },
+  { icon: 'trace', t: 'Traceable science', d: 'Every conclusion referenced to its source, ready for questions from agencies and auditors.' },
+  { icon: 'person', t: 'Direct access to the specialist', d: 'No account-management layers: the person you talk to is the person who does the work.' },
+  { icon: 'globe', t: 'English or Portuguese', d: 'Documents and meetings in the language of your team and of the target agency.' },
+] as const;
+const models = [
+  { t: 'Fixed-scope project', d: 'Scope, deliverables and fee defined in the proposal. Ideal for a gap analysis, an FIH package, a waiver justification or a set of CTD modules.', featured: false },
+  { t: 'Ongoing support', d: 'Fractional toxicologist or NAMs radar, with a fixed monthly or quarterly fee.', featured: true },
+  { t: 'Technical review', d: 'An independent opinion on documents or strategies prepared by your team or by third parties.', featured: false },
+];
+const pricing = [
+  ['Size of the regulatory question', 'A waiver justification for a single endpoint, compared with a complete nonclinical package for FIH'],
+  ['Amount and quality of existing data', 'Abundant literature and organized internal data, or gaps that require search and analysis before concluding'],
+  ['Target agencies', 'One agency, or the FDA, EMA and ANVISA in the same project'],
+  ['Deliverable', 'A technical opinion, or written CTD Modules 2.4 and 2.6'],
+  ['Timeline', 'A regular schedule or an urgent program'],
+  ['Engagement model', 'Fixed-scope project, ongoing support or technical review'],
+];
+
+const jsonLd = graph(
+  websiteNode(),
+  webPageNode({ path: meta.path, name: meta.title, description: meta.description, crumbs, about: orgRef }),
+  breadcrumbNode(meta.path, crumbs),
+  faqNode(meta.path, faq),
+);
+---
+<BaseLayout title={meta.title} description={meta.description} path={meta.path} jsonLd={jsonLd} heroImage="how-we-work-hero">
+  <section class="phero on-dark">
+    <HeroMedia image="how-we-work-hero" position="50% center" />
+    <div class="wrap phero__inner">
+      <h1 class="h-1 phero__title">Scientific rigor, confidentiality and direct communication.</h1>
+    </div>
+  </section>
+
+  <!-- 4 FASES: barra horizontal -->
+  <section class="section phases" id="process">
+    <div class="wrap">
+      <ol class="phases__bar">
+        {phases.map((p, i) => (
+          <li data-reveal>
+            <span class="phases__n">0{i + 1}</span>
+            <h2 class="h-3">{p.t}</h2>
+            <p>{p.d}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <!-- DO CONTATO À PROPOSTA -->
+  <section class="section section--alice after" id="after-contact">
+    <div class="wrap after__grid">
+      <div class="after__head">
+        <h2 class="h-1">What happens after you contact us</h2>
+        <p class="lead">Every project is scoped individually. This is the path from your first message to a written proposal.</p>
+        <span class="magnet-zone"><a class="btn btn--navy" href="/contact/">Start with a short message</a></span>
+      </div>
+      <ol class="after__list" data-count-steps>
+        {after.map((s, i) => (
+          <li class="after__item" data-step>
+            <span class="after__n">{i + 1}</span>
+            <div>
+              <h3 class="h-3">{s.t}</h3>
+              <p>{s.d}</p>
+              <dl class="after__io">
+                <div><dt>You send</dt><dd>{s.send}</dd></div>
+                <div><dt>You receive</dt><dd>{s.get}</dd></div>
+              </dl>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <!-- PRINCÍPIOS 2x2 -->
+  <section class="section principles">
+    <div class="wrap principles__grid">
+      {principles.map((p) => (
+        <article data-reveal>
+          <span class="principles__icon"><Icon name={p.icon} /></span>
+          <h2 class="h-3">{p.t}</h2>
+          <p>{p.d}</p>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <!-- FORMAS DE CONTRATAÇÃO -->
+  <section class="section section--navy on-dark models">
+    <div class="wrap">
+      <h2 class="h-1 models__title" data-reveal>Choose the format that fits your program.</h2>
+      <div class="models__grid">
+        {models.map((m) => (
+          <article class:list={['model', { 'model--featured': m.featured }]} data-reveal>
+            <h3 class="h-3">{m.t}</h3>
+            <p>{m.d}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- COMO O PREÇO É DEFINIDO -->
+  <section class="section pricing" id="pricing">
+    <div class="wrap pricing__grid">
+      <div>
+        <h2 class="h-2">Every project is scoped individually.</h2>
+        <p class="lead">The fee depends on the size of the regulatory question, the amount and quality of existing data, the target agencies, the deliverable and the timeline. You receive a written proposal with a defined scope and fee.</p>
+      </div>
+      <dl class="pricing__table">
+        {pricing.map(([k, v]) => (
+          <div data-reveal><dt>{k}</dt><dd>{v}</dd></div>
+        ))}
+      </dl>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section section--alice faq" id="faq">
+    <div class="wrap faq__grid">
+      <h2 class="h-2">Frequently asked questions</h2>
+      <div class="faq__list">
+        {faq.map((f) => (
+          <details>
+            <summary>{f.q}</summary>
+            <p>{f.a}</p>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <CtaBand title="Shall we talk about your program?" text="No-cost diagnostic meeting. NDA available before we talk." cta="Request a proposal" />
+</BaseLayout>
+
+<style>
+
+  .phases__bar { list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+  .phases__bar li { padding: 30px 26px; display: grid; gap: 10px; align-content: start; border-right: 1px solid var(--line); }
+  .phases__bar li:last-child { border-right: 0; }
+  .phases__bar li:first-child { background: var(--navy); color: #fff; }
+  .phases__bar li:first-child h2 { color: #fff; }
+  .phases__bar li:first-child p { color: rgba(255,255,255,.82); }
+  .phases__n { font-family: var(--f-display); font-weight: 700; font-size: 2.4rem; line-height: 1; color: var(--mint-ink); }
+  .phases__bar li:first-child .phases__n { color: var(--mint); }
+  .phases__bar h2 { color: var(--navy); }
+  .phases__bar p { color: var(--muted); }
+  @media (max-width: 860px) { .phases__bar { grid-template-columns: 1fr 1fr; } .phases__bar li:nth-child(2) { border-right: 0; } .phases__bar li:nth-child(-n+2) { border-bottom: 1px solid var(--line); } }
+  @media (max-width: 560px) { .phases__bar { grid-template-columns: 1fr; } .phases__bar li { border-right: 0; border-bottom: 1px solid var(--line); } }
+
+  .after__grid { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 64px; align-items: start; }
+  .after__head { position: sticky; top: 120px; display: grid; gap: 18px; justify-items: start; }
+  .after__head h2 { color: var(--navy); }
+  .after__list { list-style: none; display: grid; gap: 14px; }
+  .after__item { display: grid; grid-template-columns: 56px 1fr; gap: 20px; padding: 26px; background: var(--white); border-radius: var(--r); border: 1px solid var(--line); }
+  .after__n { width: 56px; height: 56px; display: grid; place-items: center; border-radius: var(--r); background: var(--navy); color: #fff; font-family: var(--f-display); font-weight: 600; font-size: 1.25rem; }
+  .after__item h3 { color: var(--navy); }
+  .after__item p { color: var(--muted); margin-top: 6px; }
+  .after__io { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0 0; padding-top: 14px; border-top: 1px dashed var(--line); }
+  .after__io dt { font-family: var(--f-ui); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mint-ink); }
+  .after__io dd { margin: 4px 0 0; font-size: 0.95rem; color: var(--ink); }
+  @media (max-width: 960px) { .after__grid { grid-template-columns: 1fr; gap: 32px; } .after__head { position: static; } }
+  @media (max-width: 560px) { .after__item { grid-template-columns: 1fr; } .after__io { grid-template-columns: 1fr; } }
+
+  .principles__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+  .principles__grid article { padding: 36px; display: grid; gap: 10px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .principles__icon { color: var(--baltic); }
+  .principles__grid h2 { color: var(--navy); }
+  .principles__grid p { color: var(--muted); }
+  @media (max-width: 760px) { .principles__grid { grid-template-columns: 1fr; } }
+
+  .models__title { max-width: 18ch; margin-bottom: 40px; }
+  .models__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; align-items: stretch; }
+  .model { padding: 32px; border-radius: var(--r); background: rgba(255,255,255,.05); border: 1px solid var(--line-dark); display: grid; gap: 12px; align-content: start; }
+  .model p { color: rgba(255,255,255,.82); }
+  .model--featured { background: var(--white); border-color: var(--white); transform: translateY(-10px); }
+  .model--featured h3 { color: var(--navy); }
+  .model--featured p { color: var(--muted); }
+  .model__flag { justify-self: start; font-family: var(--f-ui); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--navy-deep) !important; background: var(--mint); padding: 5px 9px; border-radius: 4px; }
+  @media (max-width: 860px) { .models__grid { grid-template-columns: 1fr; } .model--featured { transform: none; } }
+
+  .pricing__grid { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 56px; align-items: start; }
+  .pricing h2 { color: var(--navy); margin: 14px 0 18px; }
+  .pricing__table { margin: 0; border-top: 2px solid var(--navy); }
+  .pricing__table div { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 20px; padding: 18px 0; border-bottom: 1px solid var(--line); }
+  .pricing__table dt { font-family: var(--f-display); font-weight: 600; color: var(--navy); }
+  .pricing__table dd { margin: 0; color: var(--muted); }
+  @media (max-width: 860px) { .pricing__grid, .pricing__table div { grid-template-columns: 1fr; gap: 8px; } }
+
+  .faq__grid { display: grid; grid-template-columns: 0.6fr 1.4fr; gap: 48px; }
+  .faq h2 { color: var(--navy); }
+  .faq__list { border-top: 1px solid var(--line); }
+  .faq details { border-bottom: 1px solid var(--line); }
+  .faq summary {
+    cursor: pointer; list-style: none; padding: 20px 40px 20px 0; position: relative;
+    font-family: var(--f-display); font-weight: 600; font-size: 1.08rem; color: var(--navy);
+  }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: '+'; position: absolute; right: 6px; top: 16px; font-size: 1.5rem; font-weight: 400; color: var(--mint-ink); transition: transform 0.25s; }
+  .faq details[open] summary::after { transform: rotate(45deg); }
+  .faq details p { padding: 0 0 22px; color: var(--muted); max-width: 72ch; }
+  @media (max-width: 860px) { .faq__grid { grid-template-columns: 1fr; gap: 20px; } }
+</style>

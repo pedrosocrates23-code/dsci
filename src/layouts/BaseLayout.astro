@@ -1,0 +1,101 @@
+---
+import '../styles/global.css';
+import soraLatin from '@fontsource-variable/sora/files/sora-latin-wght-normal.woff2?url';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import ConsentBar from '../components/ConsentBar.astro';
+import SiteSearch from '../components/SiteSearch.astro';
+import { BRAND, DOMAIN_PENDING, INTEGRATIONS } from '../config/site';
+import { abs } from '../lib/schema';
+import { PAGES } from '../config/pages';
+import { getCollection } from 'astro:content';
+import { getImage as transformImage } from 'astro:assets';
+import { getImage as heroSource, HERO_WIDTHS, HERO_QUALITY, type ImageKey } from '../lib/images';
+import sourceLatin from '@fontsource-variable/source-sans-3/files/source-sans-3-latin-wght-normal.woff2?url';
+
+interface Props {
+  title: string;
+  description: string;
+  path: string;
+  jsonLd?: string;
+  headerTone?: 'image' | 'light';
+  noindex?: boolean;
+  ogType?: 'website' | 'article' | 'profile';
+  ogImage?: string;
+  /** Última mudança de conteúdo (AAAA-MM-DD). Vira o <lastmod> do sitemap. Páginas fixas: vem de PAGES. */
+  updated?: string;
+  /** Foto do hero (LCP): pré-carregada no <head> antes das fontes. */
+  heroImage?: ImageKey;
+}
+const { title, description, path, jsonLd, headerTone = 'image', noindex = false, ogType = 'website', ogImage = '/og-default.png' } = Astro.props;
+const heroSrc = Astro.props.heroImage ? heroSource(Astro.props.heroImage) : null;
+const heroPreload = heroSrc ? await transformImage({ src: heroSrc, format: 'avif', widths: HERO_WIDTHS, quality: HERO_QUALITY }) : null;
+const updated = Astro.props.updated ?? Object.values(PAGES).find((p) => p.path === path)?.updated;
+const canonical = abs(path);
+const robots = noindex ? 'noindex, follow' : DOMAIN_PENDING ? 'noindex, nofollow' : 'index, follow, max-image-preview:large';
+const hasBlog = (await getCollection('blog', ({ data }) => !data.draft)).length > 0;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {/* Enquanto o domínio não for definido (D1), tudo sai em noindex: data-domain-pending
+        avisa o check-seo de que esta página é indexável em princípio. */}
+    <meta name="robots" content={robots} data-domain-pending={DOMAIN_PENDING && !noindex ? 'true' : undefined} />
+    <meta name="theme-color" content="#0a2f5b" />
+    {updated && !noindex && <meta name="dsci:updated" content={updated} />}
+
+    {heroPreload && <link rel="preload" as="image" type="image/avif" imagesrcset={heroPreload.srcSet.attribute} imagesizes="100vw" fetchpriority="high" />}
+    <link rel="preload" href={soraLatin} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={sourceLatin} as="font" type="font/woff2" crossorigin />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <meta property="og:site_name" content={BRAND.name} />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={abs(ogImage)} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    {hasBlog && <link rel="alternate" type="application/rss+xml" title={`${BRAND.name} blog`} href="/blog/rss.xml" />}
+    {jsonLd && <script type="application/ld+json" set:html={jsonLd} />}
+
+    {INTEGRATIONS.ga4 && (
+      <script is:inline define:vars={{ id: INTEGRATIONS.ga4 }}>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){ dataLayer.push(arguments); }
+        window.gtag = gtag;
+        gtag('consent', 'default', { ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied', analytics_storage: 'denied', wait_for_update: 500 });
+        try { if (localStorage.getItem('dsci-consent') === 'granted') gtag('consent', 'update', { analytics_storage: 'granted' }); } catch (e) {}
+        gtag('js', new Date());
+        gtag('config', id);
+        window.__ga4id = id;
+      </script>
+    )}
+    {INTEGRATIONS.ga4 && <script async src={`https://www.googletagmanager.com/gtag/js?id=${INTEGRATIONS.ga4}`}></script>}
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <Header tone={headerTone} current={path} />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
+    <SiteSearch />
+    {INTEGRATIONS.ga4 && <ConsentBar />}
+    <script>
+      // Último script da página (depois do conteúdo e da foto do hero): header, menu, prefetch e motion.
+      import '../scripts/site';
+    </script>
+  </body>
+</html>

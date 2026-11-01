@@ -1,0 +1,40 @@
+---
+/** Barra de consentimento discreta, fixa no rodapé, não modal (o prompt veta pop-up).
+ *  Só é renderizada quando há PUBLIC_GA4_ID. Consentimento desmarcado por padrão (LGPD). */
+---
+<div class="consent" role="region" aria-label="Cookie consent" data-consent hidden>
+  <p>We use analytics cookies only with your consent, to understand how the site is used. <a href="/privacy-policy/">Privacy policy</a></p>
+  <div class="consent__actions">
+    <button type="button" class="btn btn--ghost" data-consent-deny>Decline</button>
+    <button type="button" class="btn" data-consent-allow>Accept</button>
+  </div>
+</div>
+
+<script>
+  const bar = document.querySelector<HTMLElement>('[data-consent]');
+  let stored: string | null = null;
+  try { stored = localStorage.getItem('dsci-consent'); } catch {}
+  if (bar && !stored) bar.hidden = false;
+  const decide = (value: 'granted' | 'denied') => {
+    try { localStorage.setItem('dsci-consent', value); } catch {}
+    const w = window as unknown as { gtag?: (...a: unknown[]) => void };
+    w.gtag?.('consent', 'update', { analytics_storage: value });
+    if (bar) bar.hidden = true;
+  };
+  bar?.querySelector('[data-consent-allow]')?.addEventListener('click', () => decide('granted'));
+  bar?.querySelector('[data-consent-deny]')?.addEventListener('click', () => decide('denied'));
+</script>
+
+<style>
+  .consent {
+    position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 60; margin-inline: auto; max-width: 860px;
+    display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap;
+    padding: 14px 16px; border-radius: 8px; color: #fff; font-size: 0.95rem;
+    background: rgba(6, 27, 54, 0.82); -webkit-backdrop-filter: blur(18px) saturate(160%); backdrop-filter: blur(18px) saturate(160%);
+    border: 1px solid var(--glass-border); box-shadow: var(--glass-shine), var(--shadow);
+  }
+  .consent[hidden] { display: none; }
+  .consent a { color: var(--mint); }
+  .consent__actions { display: flex; gap: 8px; }
+  .consent .btn { min-height: 40px; padding: 0.5em 1em; }
+</style>

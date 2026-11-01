@@ -1,0 +1,35 @@
+---
+/**
+ * Quadro de autoria (ajuste A1 do plano): substitui o "Liderança técnica" do prompt.
+ * Sem cargo, sem "na D-Sci", sem foto. Modo 'blog-link' se a D11 decidir "só posts".
+ */
+import { getEntry, getCollection } from 'astro:content';
+import { AUTHORSHIP_MODE } from '../config/site';
+const author = await getEntry('authors', 'jordana-andrade-santos');
+const hasBlog = (await getCollection('blog', ({ data }) => !data.draft)).length > 0;
+---
+{AUTHORSHIP_MODE === 'authorship' && author ? (
+  <aside class="authorship" aria-label="Technical authorship" data-reveal>
+    <p class="authorship__label">Technical authorship</p>
+    <div class="authorship__body">
+      <p class="authorship__name">{author.data.name}, {author.data.honorificSuffix}</p>
+      <p class="authorship__bio">{author.data.bio}</p>
+      <a class="link-arrow" href="/authors/jordana-andrade-santos/">View author page</a>
+    </div>
+  </aside>
+) : hasBlog ? (
+  <aside class="authorship" aria-label="Technical articles" data-reveal>
+    <p class="authorship__label">Technical articles</p>
+    <div class="authorship__body"><a class="link-arrow" href="/blog/">Technical articles on the blog</a></div>
+  </aside>
+) : null}
+<style>
+  .authorship {
+    display: grid; grid-template-columns: 220px 1fr; gap: 32px; align-items: start;
+    padding: 32px; border: 1px solid var(--line); border-left: 4px solid var(--baltic); border-radius: var(--r); background: var(--white);
+  }
+  .authorship__label { font-family: var(--f-display); font-weight: 600; font-size: 1rem; color: var(--baltic); }
+  .authorship__name { font-family: var(--f-display); font-weight: 600; font-size: 1.25rem; color: var(--navy); }
+  .authorship__bio { margin: 8px 0 14px; color: var(--muted); max-width: 70ch; }
+  @media (max-width: 760px) { .authorship { grid-template-columns: 1fr; gap: 12px; padding: 24px; } }
+</style>

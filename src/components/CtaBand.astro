@@ -1,0 +1,32 @@
+---
+/** Faixa de chamada em Baltic Blue. Botão branco: mint sobre baltic reprova os 3:1 de UI.
+ *  Fundo padrão: foto de fachada em cinza a 16%. Com `backdrop`: foto 4K em cor, com véu navy
+ *  (teste na página de Serviços, 2026-10-31). */
+import SectionImage from './SectionImage.astro';
+import SectionBackdrop from './SectionBackdrop.astro';
+import type { SectionImageKey, BackdropKey } from '../lib/images';
+interface Props { title: string; text?: string; cta: string; href?: string; image?: SectionImageKey; backdrop?: BackdropKey; }
+const { title, text, cta, href = '/contact/', image = 'sec-architecture-glass', backdrop } = Astro.props;
+---
+<section class="cta-band on-dark" aria-label={title}>
+  {backdrop
+    ? <SectionBackdrop image={backdrop} position="70% center" veil="linear-gradient(90deg, rgba(6, 27, 54, 0.9) 0%, rgba(10, 47, 91, 0.62) 50%, rgba(62, 107, 140, 0.25) 100%)" />
+    : <SectionImage image={image} bg sizes="100vw" position="center 35%" />}
+  <svg class="cta-band__mark" viewBox="0 0 44 92" aria-hidden="true"><path d="M0 0h44v12H12v28H0z M0 52h12v28h32v12H0z" fill="currentColor" /></svg>
+  <div class="wrap cta-band__inner">
+    <div>
+      <h2 class="h-2" data-reveal>{title}</h2>
+      {text && <p class="cta-band__text" data-reveal>{text}</p>}
+    </div>
+    <span class="magnet-zone">
+      <a class="btn btn--white" href={href} data-magnetic="0.4">{cta}</a>
+    </span>
+  </div>
+</section>
+<style>
+  .cta-band { position: relative; overflow: hidden; isolation: isolate; background: var(--baltic); padding-block: clamp(64px, 9vw, 112px); }
+  .cta-band__mark { position: absolute; right: -2vw; top: 50%; translate: 0 -50%; height: 170%; width: auto; color: rgba(255, 255, 255, 0.07); }
+  .cta-band__inner { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 40px; flex-wrap: wrap; }
+  .cta-band h2 { max-width: 20ch; }
+  .cta-band__text { margin-top: 14px; font-size: 1.15rem; color: rgba(255, 255, 255, 0.88); max-width: 46ch; }
+</style>

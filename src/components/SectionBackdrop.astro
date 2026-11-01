@@ -1,0 +1,62 @@
+---
+/**
+ * Foto de fundo de uma seção INTEIRA (pedido da usuária, 2026-10-31: imagem de alta qualidade no
+ * container todo, não foto solta no meio do conteúdo). Decorativa: sem alt, atrás do conteúdo.
+ *
+ * Um véu navy (prop `veil`, um background CSS) garante o contraste do texto branco: mais denso do
+ * lado do texto, mais leve onde está o assunto da foto. A seção precisa de `isolation: isolate`.
+ *
+ * Mesmo carregamento do SectionImage: <picture> dentro de <noscript>, injetado pelo site.ts depois
+ * do load (não disputa banda com o hero, o PageSpeed fica em 100). Até lá aparece a cor da seção.
+ */
+import { Picture } from 'astro:assets';
+import { getBackdrop, type BackdropKey } from '../lib/images';
+
+interface Props {
+  image: BackdropKey;
+  /** object-position da foto (onde fica o assunto). */
+  position?: string;
+  /** Camada por cima da foto (CSS background). */
+  veil?: string;
+  /** Véu no celular, onde o texto ocupa a largura toda. */
+  veilMobile?: string;
+}
+const {
+  image,
+  position = 'center',
+  veil = 'linear-gradient(90deg, rgba(6, 27, 54, 0.92) 0%, rgba(6, 27, 54, 0.72) 45%, rgba(6, 27, 54, 0.38) 100%)',
+  veilMobile = 'linear-gradient(180deg, rgba(6, 27, 54, 0.9) 0%, rgba(6, 27, 54, 0.78) 100%)',
+} = Astro.props;
+const src = getBackdrop(image);
+---
+{src && (
+  <figure class="bd" data-simg aria-hidden="true" style={`--bd-veil:${veil};--bd-veil-m:${veilMobile}`}>
+    <noscript><Picture
+      src={src}
+      alt=""
+      formats={['avif', 'webp']}
+      fallbackFormat="jpg"
+      quality={58}
+      widths={[640, 960, 1280, 1920, 2560, 3840]}
+      sizes="100vw"
+      loading="lazy"
+      decoding="async"
+      class="bd__img"
+      style={`object-position:${position}`}
+    /></noscript>
+  </figure>
+)}
+
+<style>
+  .bd { position: absolute; inset: 0; z-index: -1; margin: 0; overflow: hidden; pointer-events: none; }
+  .bd :global(picture), .bd :global(img) { display: block; width: 100%; height: 100%; }
+  .bd :global(img) { object-fit: cover; }
+  .bd::after { content: ''; position: absolute; inset: 0; background: var(--bd-veil); }
+  @media (max-width: 860px) { .bd::after { background: var(--bd-veil-m); } }
+  /* Entrada: fade + zoom bem leve (classes postas pelo site.ts). */
+  .bd.is-injected :global(img) { opacity: 0; transition: opacity 1s ease, transform 1.8s var(--ease-out); }
+  .bd.is-injected.is-armed :global(img) { transform: scale(1.04); }
+  .bd.is-injected.is-loaded :global(img) { opacity: 1; }
+  .bd.is-injected.is-loaded.is-in :global(img) { transform: scale(1); }
+  @media (prefers-reduced-motion: reduce) { .bd :global(img) { transform: none; transition: none; } }
+</style>

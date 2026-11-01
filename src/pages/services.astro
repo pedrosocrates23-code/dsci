@@ -1,0 +1,235 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import HeroMedia from '../components/HeroMedia.astro';
+import CtaBand from '../components/CtaBand.astro';
+import SectionBackdrop from '../components/SectionBackdrop.astro';
+import { PAGES } from '../config/pages';
+import { graph, websiteNode, webPageNode, breadcrumbNode, serviceNode, orgRef, abs } from '../lib/schema';
+
+const meta = PAGES.services;
+const crumbs = [{ name: 'Home', path: '/' }, { name: 'Services', path: meta.path }];
+
+type Sector = 'pharma' | 'cosmetics' | 'both';
+const main: { id: string; n: string; title: string; sector: Sector; sectorLabel: string; text: string; deliverables: string[]; link?: { href: string; label: string } }[] = [
+  {
+    id: 'nonclinical-strategy', n: '01', title: 'Evidence-driven nonclinical strategy', sector: 'pharma', sectorLabel: 'Pharma and biotech',
+    text: 'Planning of the nonclinical program from existing data, with judicious use of NAMs and in silico approaches, through to defining the assays that are truly needed.',
+    deliverables: ['Existing data assessment and data gap analysis', 'Study roadmap (what to run, what to waive, in what order)', 'Minimum evidence package for FIH', 'Laboratory guidance and oversight of studies at CROs'],
+    link: { href: '/nams-strategy/', label: 'See the complete approach' },
+  },
+  {
+    id: 'study-waivers', n: '02', title: 'Study waiver justifications', sector: 'pharma', sectorLabel: 'Pharma and biotech',
+    text: 'Technical and scientific rationales to waive studies when existing evidence already answers the regulatory question.',
+    deliverables: ['Feasibility assessment', 'Justification document with traceable references', 'Support in responding to agency questions'],
+    link: { href: '/nams-strategy/#waivers', label: 'See in detail' },
+  },
+  {
+    id: 'nonclinical-writing', n: '03', title: 'Nonclinical writing', sector: 'pharma', sectorLabel: 'Pharma and biotech',
+    text: 'Writing of the documents that take a drug candidate to the clinic, with pharmacology, pharmacokinetics and toxicology data organized into a clear and consistent narrative.',
+    deliverables: ['CTD Module 2.4 (Nonclinical Overview)', 'CTD Module 2.6 (written and tabulated summaries)', 'Nonclinical study reports', 'Technical review and quality control of documents'],
+  },
+  {
+    id: 'toxicological-assessment', n: '04', title: 'Toxicological assessment of products', sector: 'both', sectorLabel: 'Pharma, biotech, cosmetics and ingredients',
+    text: 'Safety assessment of medicines, finished products, ingredients and molecules, based on a critical review of the literature and the applicable regulatory requirements.',
+    deliverables: ['Toxicological profile of substances and ingredients', 'Safety assessment of finished products', 'CPSR (Parts A and B) and PIF support, for cosmetics', 'Documentation for ANVISA submissions'],
+  },
+];
+const ongoing = [
+  { id: 'fractional-toxicologist', title: 'Fractional toxicologist (on demand)', text: 'A monthly package of hours for pharmaceutical and biotechnology companies without a toxicologist on the team, or with demand above internal capacity.', items: ['Answers to technical and regulatory questions', 'Review of protocols, test reports and study reports', 'Oversight of studies at CROs', 'Updates to regulatory documents'] },
+  { id: 'nams-radar', title: 'NAMs radar applied to the portfolio', text: 'A quarterly report that cross-references regulatory news on NAMs (OECD, FDA, EMA, ANVISA) with the client’s projects and indicates which planned studies could be replaced, reduced or waived.', items: ['Customized quarterly report', 'Meeting to discuss the findings', 'Ad hoc alerts on relevant changes'] },
+];
+const cosmetics = [
+  { id: 'cosmetic-safety', title: 'Cosmetic safety', text: 'CPSR, PIF and documentation for ANVISA.' },
+  { id: 'animal-free-testing', title: 'Animal-free testing strategies', text: 'Eye and skin irritation and sensitization, based on OECD guidelines.' },
+  { id: 'hazard-communication', title: 'Hazard communication', text: 'GHS classification and Safety Data Sheets (SDS).' },
+];
+const also = [
+  { t: 'Claims and scientific communication', d: 'Claim substantiation for labels and marketing, technical materials, white papers and articles.' },
+  { t: 'Manuscripts and funding proposals', d: 'Scientific writing for publications and funding calls.' },
+  { t: 'Consulting for NAM developers', d: 'Context of use, qualification plan and regulatory pathway for new methods, including 3D models and organ-on-chip.' },
+  { t: 'In-company training', d: 'NAMs, in vitro toxicology, reproductive toxicology and hazard communication.' },
+];
+
+const services = [
+  ...main.map((s) =>
+    s.id === 'study-waivers'
+      ? serviceNode({ path: meta.path, anchor: s.id, name: s.title, description: s.text, sameAsRef: '/nams-strategy/#waivers' })
+      : serviceNode({ path: meta.path, anchor: s.id, name: s.title, description: s.text, audience: s.sectorLabel }),
+  ),
+  ...ongoing.map((s) => serviceNode({ path: meta.path, anchor: s.id, name: s.title, description: s.text, audience: 'Pharmaceutical and biotechnology companies' })),
+  ...cosmetics.map((s) => serviceNode({ path: meta.path, anchor: s.id, name: s.title, description: s.text, audience: 'Cosmetic brands and ingredient suppliers' })),
+];
+const catalog = {
+  '@type': 'OfferCatalog',
+  '@id': abs(meta.path) + '#catalog',
+  name: 'D-Sci Consulting services',
+  itemListElement: services.map((s) => ({ '@type': 'Offer', itemOffered: { '@id': (s['@id'] as string) } })),
+};
+const jsonLd = graph(
+  websiteNode(),
+  webPageNode({ path: meta.path, name: meta.title, description: meta.description, crumbs, about: orgRef, mainEntity: { '@id': catalog['@id'] } }),
+  breadcrumbNode(meta.path, crumbs),
+  { ...catalog, provider: orgRef } as Record<string, unknown>,
+  ...services.filter((s) => s['@type']),
+);
+---
+<BaseLayout title={meta.title} description={meta.description} path={meta.path} jsonLd={jsonLd} heroImage="services-hero">
+  <section class="phero on-dark">
+    <HeroMedia image="services-hero" position="55% center" />
+    <div class="wrap phero__inner">
+      <h1 class="h-1 phero__title">Services for every stage of development.</h1>
+      <p class="phero__sub">Tailored projects or ongoing support, with scope and deliverables defined in the proposal.</p>
+    </div>
+  </section>
+
+  <section class="section svc">
+    <div class="wrap">
+      <!-- Filtro: só mostra e esconde cartões que já estão no HTML (plano v2, seção 8) -->
+      <div class="filter" role="group" aria-label="Filter services by sector" data-filter>
+        <button type="button" aria-pressed="true" data-value="all">All</button>
+        <button type="button" aria-pressed="false" data-value="pharma">Pharma and biotech</button>
+        <button type="button" aria-pressed="false" data-value="cosmetics">Cosmetics and ingredients</button>
+      </div>
+
+      <div class="svc__list">
+        {main.map((s) => (
+          <article id={s.id} class="svc-card" data-sector={s.sector} data-reveal>
+            <div class="svc-card__main">
+              <p class="svc-card__n">{s.n}</p>
+              <h2 class="h-2">{s.title}</h2>
+              <p class="svc-card__sector">{s.sectorLabel}</p>
+              <p class="svc-card__text">{s.text}</p>
+              {s.link && <a class="link-arrow" href={s.link.href}>{s.link.label}</a>}
+            </div>
+            <div class="svc-card__box">
+              <p class="svc-card__label">Deliverables</p>
+              <ul>{s.deliverables.map((d) => <li>{d}</li>)}</ul>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section id="ongoing-support" class="section section--navy on-dark ongoing" data-sector="pharma">
+    <SectionBackdrop image="bd-ongoing" position="72% center" />
+    <div class="wrap">
+      <p class="ongoing__badge">Ongoing support · Pharma and biotech</p>
+      <h2 class="h-1 ongoing__title">A toxicologist alongside your program.</h2>
+      <div class="ongoing__grid">
+        {ongoing.map((o) => (
+          <article id={o.id} class="ongoing__card" data-reveal>
+            <h3 class="h-3">{o.title}</h3>
+            <p>{o.text}</p>
+            <p class="ongoing__label">Includes</p>
+            <ul>{o.items.map((i) => <li>{i}</li>)}</ul>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section id="cosmetics" class="section section--alice cosmetics" data-sector="cosmetics">
+    <div class="wrap">
+      <h2 class="h-2 cosmetics__title">Cosmetics and ingredients</h2>
+      <div class="cosmetics__grid">
+        {cosmetics.map((c, i) => (
+          <article id={c.id} class="cos-card" data-reveal>
+            <span class="cos-card__n" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+            <h2 class="h-3">{c.title}</h2>
+            <p>{c.text}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section also">
+    <div class="wrap also__grid">
+      <h2 class="h-2" data-reveal>We also work on</h2>
+      <dl class="also__list">
+        {also.map((a) => (
+          <div data-reveal><dt>{a.t}</dt><dd>{a.d}</dd></div>
+        ))}
+      </dl>
+    </div>
+  </section>
+
+  <CtaBand title="Didn't find exactly what you need?" text="Every project is tailor-made. Describe your case." cta="Talk to D-Sci" backdrop="bd-cta" />
+</BaseLayout>
+
+<script>
+  const group = document.querySelector<HTMLElement>('[data-filter]');
+  const targets = document.querySelectorAll<HTMLElement>('[data-sector]');
+  group?.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest('button');
+    if (!btn) return;
+    const value = btn.dataset.value!;
+    group.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+    targets.forEach((el) => {
+      const s = el.dataset.sector;
+      el.hidden = !(value === 'all' || s === 'both' || s === value);
+    });
+  });
+</script>
+
+<style>
+
+  .filter { display: inline-flex; gap: 4px; padding: 5px; border-radius: 8px; background: var(--alice); border: 1px solid var(--line); margin-bottom: 40px; flex-wrap: wrap; }
+  .filter button {
+    font-family: var(--f-ui); font-size: 0.95rem; font-weight: 500; padding: 10px 16px; border-radius: 5px;
+    border: 0; background: transparent; color: var(--navy); cursor: pointer; transition: background 0.2s, color 0.2s;
+  }
+  .filter button[aria-pressed='true'] { background: var(--navy); color: #fff; }
+  .filter button:hover:not([aria-pressed='true']) { background: rgba(10,47,91,.08); }
+
+  [hidden] { display: none !important; }
+  .svc__list { display: grid; gap: 22px; }
+  .svc-card {
+    display: grid; grid-template-columns: 1.25fr 1fr; gap: 0; border: 1px solid var(--line); border-radius: var(--r); overflow: hidden;
+    scroll-margin-top: 110px; transition: box-shadow 0.3s, border-color 0.3s;
+  }
+  .svc-card:hover { box-shadow: var(--shadow); border-color: var(--baltic); }
+  .svc-card__main { padding: clamp(28px, 3.5vw, 44px); display: grid; gap: 12px; align-content: start; }
+  .svc-card__n { font-family: var(--f-ui); font-weight: 600; color: var(--mint-ink); }
+  .svc-card h2 { color: var(--navy); }
+  .svc-card__sector { font-family: var(--f-ui); font-size: 0.85rem; color: var(--baltic); font-weight: 600; }
+  .svc-card__text { color: var(--muted); }
+  .svc-card__box { background: var(--alice); padding: clamp(28px, 3.5vw, 44px); border-left: 1px solid var(--line); }
+  .svc-card__label, .ongoing__label { font-family: var(--f-ui); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mint-ink); margin-bottom: 14px; }
+  .svc-card__box ul, .ongoing__card ul { list-style: none; display: grid; gap: 10px; }
+  .svc-card__box li, .ongoing__card li { position: relative; padding-left: 22px; }
+  .svc-card__box li::before, .ongoing__card li::before { content: ''; position: absolute; left: 2px; top: 0.42em; width: 6px; height: 11px; border: 2px solid var(--mint-ink); border-right: 0; }
+  @media (max-width: 860px) { .svc-card { grid-template-columns: 1fr; } .svc-card__box { border-left: 0; border-top: 1px solid var(--line); } }
+
+  /* Foto de fundo 4K (SectionBackdrop): a seção vira o container da foto; os cartões viram vidro fosco. */
+  .ongoing { position: relative; isolation: isolate; overflow: hidden; }
+  .ongoing__badge { display: inline-block; font-family: var(--f-ui); font-size: 0.8rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--navy-deep); background: var(--mint); padding: 6px 10px; border-radius: 4px; }
+  .ongoing__title { margin: 18px 0 40px; max-width: 18ch; }
+  .ongoing__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  .ongoing__card {
+    padding: clamp(26px, 3vw, 40px); border-radius: var(--r); display: grid; gap: 12px; align-content: start; scroll-margin-top: 110px;
+    background: rgba(6, 27, 54, 0.42); border: 1px solid var(--line-dark); box-shadow: var(--glass-shine);
+    -webkit-backdrop-filter: blur(10px) saturate(1.1); backdrop-filter: blur(10px) saturate(1.1);
+  }
+  .ongoing__card p { color: rgba(255,255,255,.82); }
+  .ongoing__card .ongoing__label { color: var(--mint); margin: 8px 0 4px; }
+  .ongoing__card li::before { border-color: var(--mint); }
+  @media (max-width: 860px) { .ongoing__grid { grid-template-columns: 1fr; } }
+
+  .cosmetics { scroll-margin-top: 90px; }
+  .cosmetics__title { color: var(--navy); }
+  .cosmetics__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-top: 22px; }
+  .cos-card { background: var(--white); border-radius: var(--r); padding: 30px; display: grid; gap: 10px; align-content: start; border-top: 4px solid var(--baltic); scroll-margin-top: 110px; }
+  .cos-card__n { font-family: var(--f-ui); font-weight: 600; font-size: 0.85rem; letter-spacing: 0.08em; color: var(--mint-ink); }
+  .cos-card h2 { color: var(--navy); }
+  .cos-card p { color: var(--muted); }
+  @media (max-width: 860px) { .cosmetics__grid { grid-template-columns: 1fr; } }
+
+  .also__grid { display: grid; grid-template-columns: 0.7fr 1.3fr; gap: 48px; }
+  .also h2 { color: var(--navy); }
+  .also__list { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 28px 40px; }
+  .also__list dt { font-family: var(--f-display); font-weight: 600; color: var(--navy); margin-bottom: 6px; }
+  .also__list dd { margin: 0; color: var(--muted); }
+  @media (max-width: 860px) { .also__grid, .also__list { grid-template-columns: 1fr; } }
+</style>
