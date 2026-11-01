@@ -64,7 +64,7 @@ const jsonLd = graph(
             </label>
             <label class="field"><span>Your message</span><textarea name="message" rows="6" required maxlength="4000" placeholder="The product, the regulatory goal and where you are today."></textarea></label>
 
-            <label class="check"><input type="checkbox" name="consent" value="yes" required /><span>I agree to the use of my data to reply to this contact, as described in the <a href="/privacy-policy/">Privacy policy</a> (LGPD).</span></label>
+            <label class="check"><input type="checkbox" name="consent" value="yes" required /><span>I agree to the use of my data to reply to this contact, as described in the <a href="/privacy-policy/">Privacy policy</a>.</span></label>
 
             <div class="hp" aria-hidden="true"><label>Leave this field empty<input name="website" tabindex="-1" autocomplete="off" /></label></div>
             {INTEGRATIONS.turnstileSiteKey && <div class="cf-turnstile" data-sitekey={INTEGRATIONS.turnstileSiteKey} data-appearance="interaction-only"></div>}

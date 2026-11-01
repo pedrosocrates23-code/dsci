@@ -14,15 +14,35 @@
   const bar = document.querySelector<HTMLElement>('[data-consent]');
   let stored: string | null = null;
   try { stored = localStorage.getItem('dsci-consent'); } catch {}
-  if (bar && !stored) bar.hidden = false;
+  // Global Privacy Control ligado e nenhuma escolha feita: vale como recusa (política, seção de
+  // cookies; CCPA). A barra não aparece; a pessoa ainda pode aceitar pelo botão da política.
+  const gpc = (navigator as Navigator & { globalPrivacyControl?: boolean }).globalPrivacyControl === true;
+  if (bar && !stored && !gpc) bar.hidden = false;
+
+  // Retirada do consentimento: apaga os cookies de medição que o site gravou (_ga, _ga_*, Clarity).
+  const clearAnalyticsCookies = () => {
+    const host = location.hostname;
+    const domains = ['', host, `.${host}`, `.${host.split('.').slice(-2).join('.')}`];
+    document.cookie.split(';').map((c) => c.split('=')[0].trim()).filter((n) => /^(_ga|_clck|_clsk|CLID)/.test(n)).forEach((n) => {
+      domains.forEach((d) => { document.cookie = `${n}=; Max-Age=0; path=/${d ? `; domain=${d}` : ''}`; });
+    });
+  };
+
   const decide = (value: 'granted' | 'denied') => {
     try { localStorage.setItem('dsci-consent', value); } catch {}
     const w = window as unknown as { gtag?: (...a: unknown[]) => void; clarity?: (...a: unknown[]) => void };
     w.gtag?.('consent', 'update', { analytics_storage: value });
     // Clarity só existe depois dos 3 s; se a escolha vier antes, o carregador lê o localStorage.
     if (value === 'granted') w.clarity?.('consent'); else w.clarity?.('consent', false);
+    if (value === 'denied') clearAnalyticsCookies();
     if (bar) bar.hidden = true;
   };
+  // Botão "Change cookie settings" da política de privacidade: reabre a barra.
+  document.addEventListener('dsci:consent-open', () => {
+    if (!bar) return;
+    bar.hidden = false;
+    bar.querySelector<HTMLElement>('[data-consent-deny]')?.focus();
+  });
   bar?.querySelector('[data-consent-allow]')?.addEventListener('click', () => decide('granted'));
   bar?.querySelector('[data-consent-deny]')?.addEventListener('click', () => decide('denied'));
 </script>

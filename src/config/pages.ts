@@ -57,10 +57,10 @@ export const PAGES = {
   },
   privacy: {
     path: '/privacy-policy/',
-    title: 'Privacy policy (LGPD) | D-Sci Consulting',
+    title: 'Privacy policy (LGPD, GDPR, US) | D-Sci Consulting',
     description:
-      "How D-Sci Consulting handles the data sent through its contact form, under Brazil's General Data Protection Law (LGPD).",
-    updated: '2026-10-31',
+      'How D-Sci Consulting handles personal data under Brazil’s LGPD, the EU and UK GDPR and US state privacy laws: what we collect, why and your rights.',
+    updated: '2026-11-01',
   },
   blog: {
     path: '/blog/',

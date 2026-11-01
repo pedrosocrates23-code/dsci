@@ -1,5 +1,16 @@
 ---
-/** Política simples (prompt, seção 10). Texto a revisar pelo jurídico da cliente (N7: GDPR). */
+/**
+ * Política de privacidade (pedido da usuária, 2026-11-01): LGPD + GDPR (UE/EEE) + UK GDPR + leis
+ * estaduais dos EUA (CCPA/CPRA e as demais) + CalOPPA. Pesquisa de 2026-11-01 com as fontes no
+ * resumo entregue à usuária (Downloads/politica-privacidade-dsci-2026-11-01.md).
+ *
+ * Regras deste texto:
+ *  - Só descreve o que o site faz de verdade: formulário (Resend), hospedagem (Vercel), medição
+ *    (GTM/GA4/Clarity, só com consentimento) e Turnstile, cada um só quando está ligado.
+ *  - Nenhum dado da empresa é inventado: e-mail, CNPJ e representante na UE/UK só aparecem quando
+ *    existirem (CONTACT em site.ts). Sem e-mail, o canal de privacidade é o formulário.
+ *  - Texto a revisar pelo jurídico da cliente antes de ser tratado como definitivo (N7).
+ */
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { PAGES } from '../config/pages';
 import { BRAND, CONTACT, INTEGRATIONS, HAS_ANALYTICS } from '../config/site';
@@ -7,48 +18,235 @@ import { graph, websiteNode, webPageNode, breadcrumbNode, orgRef } from '../lib/
 
 const meta = PAGES.privacy;
 const crumbs = [{ name: 'Home', path: '/' }, { name: 'Privacy policy', path: meta.path }];
-// Ferramentas de medição ativas, no texto de cookies (só o que está de fato ligado).
-const analyticsTools = [
-  INTEGRATIONS.gtm && 'analytics tags loaded through Google Tag Manager',
-  INTEGRATIONS.ga4 && 'Google Analytics',
-  INTEGRATIONS.clarity && 'Microsoft Clarity',
-].filter(Boolean).join(' and ');
 const jsonLd = graph(websiteNode(), webPageNode({ path: meta.path, name: meta.title, description: meta.description, crumbs, about: orgRef }), breadcrumbNode(meta.path, crumbs));
+
+const UPDATED = 'November 1, 2026';
+const GA = Boolean(INTEGRATIONS.ga4 || INTEGRATIONS.gtm);
+const CLARITY = Boolean(INTEGRATIONS.clarity);
+const TURNSTILE = Boolean(INTEGRATIONS.turnstileSiteKey);
+const reach = CONTACT.email ? `by email at ${CONTACT.email}` : 'through our contact form';
+
+const toc = [
+  ['summary', 'At a glance'],
+  ['who-we-are', 'Who we are'],
+  ['data', 'What we collect and why'],
+  ['cookies', 'Cookies and similar technologies'],
+  ['recipients', 'Service providers'],
+  ['transfers', 'International transfers'],
+  ['retention', 'How long we keep data'],
+  ['rights', 'Your rights'],
+  ['brazil', 'Brazil (LGPD)'],
+  ['eu-uk', 'European Union, EEA and United Kingdom (GDPR)'],
+  ['us', 'United States'],
+  ['exercise', 'How to make a request'],
+  ['other', 'Security, children and automated decisions'],
+  ['changes', 'Changes to this policy'],
+];
 ---
 <BaseLayout title={meta.title} description={meta.description} path={meta.path} jsonLd={jsonLd}>
   <section class="legal-hero on-dark">
-    <div class="wrap"><h1 class="h-1">Privacy policy</h1><p class="muted-light">Last updated: October 31, 2026</p></div>
+    <div class="wrap">
+      <h1 class="h-1">Privacy policy</h1>
+      <p class="muted-light">Last updated and effective: {UPDATED}</p>
+      <p class="legal-hero__laws">Brazil · LGPD &nbsp;|&nbsp; EU and EEA · GDPR &nbsp;|&nbsp; United Kingdom · UK GDPR &nbsp;|&nbsp; United States · state privacy laws and CalOPPA</p>
+    </div>
   </section>
+
   <article class="section legal">
-    <div class="wrap legal__body">
-      <h2 class="h-3">Who we are</h2>
-      <p>{BRAND.name} is a regulatory toxicology and nonclinical strategy consultancy based in {BRAND.location}. This policy explains how we handle the personal data sent through the contact form on this website, under Brazil's General Data Protection Law (LGPD, Law No. 13,709/2018).</p>
+    <div class="wrap legal__layout">
+      <nav class="legal__toc" aria-label="On this page">
+        <p class="legal__toc-title">On this page</p>
+        <ol>{toc.map(([id, label]) => <li><a href={`#${id}`}>{label}</a></li>)}</ol>
+      </nav>
 
-      <h2 class="h-3">What data we collect</h2>
-      <p>When you use the contact form, we receive the data you enter: name, work email, area of activity and the message about your project. We ask you not to include confidential product data in this first contact.</p>
+      <div class="legal__body">
+        <h2 class="h-3" id="summary">At a glance</h2>
+        <ul class="glance">
+          <li><strong>What we collect:</strong> what you type into the contact form{HAS_ANALYTICS && ', and site-usage statistics only if you accept analytics cookies'}.</li>
+          <li><strong>Why:</strong> to answer your message and, if you ask, prepare a proposal.</li>
+          <li><strong>What we never do:</strong> sell your data, share it for advertising, or use it to make automated decisions about you.</li>
+          <li><strong>Your control:</strong> you can access, correct or delete your data and withdraw consent at any time, {reach}.</li>
+        </ul>
 
-      <h2 class="h-3">Why we use it</h2>
-      <p>We use these data only to reply to your contact, schedule a diagnostic meeting and prepare a proposal, based on the consent you give when you submit the form.</p>
+        <h2 class="h-3" id="who-we-are">Who we are</h2>
+        <p>{BRAND.name} is a regulatory toxicology and nonclinical strategy consultancy based in {BRAND.location}, working remotely with clients in Brazil, the United States and Europe. For the personal data described here, {BRAND.name} is the <em>controller</em> (LGPD: <em>controlador</em>; US state laws: <em>business</em> or <em>controller</em>).{CONTACT.cnpj && ` Brazilian company registration (CNPJ): ${CONTACT.cnpj}.`}</p>
+        <p>Privacy contact: {CONTACT.email ? <a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a> : <a href="/contact/">our contact form</a>}. This is our channel for data subjects under Article 41 of the LGPD and for any request described in this policy.</p>
+        <p>This policy covers this website ({new URL(Astro.site ?? 'https://dsciconsult.com').host}). Data we handle later under a signed consulting agreement is governed by that agreement and its confidentiality terms.</p>
 
-      <h2 class="h-3">Who processes it</h2>
-      <p>The site is hosted by Vercel, and form messages are delivered by a transactional email provider. These providers process the data only to deliver this service.{HAS_ANALYTICS && ` If you accept analytics cookies, we measure how the site is used with ${analyticsTools}; without your consent, no analytics cookie is set.`}</p>
+        <h2 class="h-3" id="data">What we collect and why</h2>
+        <p>We collect only what is needed for each purpose below. Please do not send health data, other sensitive personal data or confidential product information through the contact form; we will ask for technical details later, under a confidentiality agreement.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th scope="col">Activity</th><th scope="col">Data</th><th scope="col">Purpose</th><th scope="col">Legal basis</th></tr></thead>
+            <tbody>
+              <tr>
+                <th scope="row">Contact form</th>
+                <td>Name, work email, area of activity, your message, and the date and time it was sent</td>
+                <td>Reply to you and arrange a first conversation</td>
+                <td>Consent, which you give with the checkbox (LGPD Art. 7, I; GDPR Art. 6(1)(a))</td>
+              </tr>
+              <tr>
+                <th scope="row">Proposal and contract</th>
+                <td>The data above, plus what you share while we prepare a proposal</td>
+                <td>Prepare a proposal and the agreement you ask for</td>
+                <td>Steps taken at your request before a contract (LGPD Art. 7, V; GDPR Art. 6(1)(b))</td>
+              </tr>
+              <tr>
+                <th scope="row">Record of our exchanges</th>
+                <td>Messages and the consent record</td>
+                <td>Show that we handled your request correctly and defend legal claims</td>
+                <td>Regular exercise of rights and legitimate interest (LGPD Art. 7, VI and IX; GDPR Art. 6(1)(f))</td>
+              </tr>
+              {HAS_ANALYTICS && (
+                <tr>
+                  <th scope="row">Site analytics</th>
+                  <td>Pages viewed, approximate location (country or city), device and browser type, and how you arrived at the site, linked to a random identifier{CLARITY && '; with Microsoft Clarity, also clicks and scrolling on the page'}</td>
+                  <td>Understand which content is useful and improve the site</td>
+                  <td>Consent, only after you click “Accept” (LGPD Art. 7, I; GDPR Art. 6(1)(a); ePrivacy rules on cookies)</td>
+                </tr>
+              )}
+              <tr>
+                <th scope="row">Security and operation</th>
+                <td>IP address, browser information and request logs kept by our hosting provider{TURNSTILE && ', and the anti-spam check on the contact form'}</td>
+                <td>Deliver the site, prevent abuse and keep it secure</td>
+                <td>Legitimate interest (LGPD Art. 7, IX; GDPR Art. 6(1)(f))</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>If you do not provide the data marked as required in the form, we cannot reply to your message. No other part of the site requires personal data.</p>
 
-      <h2 class="h-3">How long we keep it</h2>
-      <p>We keep contact data for as long as needed to respond and, if a project follows, for the duration of the business relationship.</p>
+        <h2 class="h-3" id="cookies">Cookies and similar technologies</h2>
+        {HAS_ANALYTICS ? (
+          <>
+            <p>We do not use advertising cookies. Analytics tags are loaded only a few seconds after the page opens, and with Google Consent Mode set to “denied” by default: until you click “Accept”, no analytics cookie is stored on your device. If you decline, nothing changes for you on the site.</p>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th scope="col">Name</th><th scope="col">Provider</th><th scope="col">Purpose</th><th scope="col">Duration</th></tr></thead>
+                <tbody>
+                  <tr><th scope="row"><code>dsci-consent</code></th><td>{BRAND.name} (browser storage, not a cookie)</td><td>Remembers your cookie choice so the bar does not reappear</td><td>Until you clear your browser data</td></tr>
+                  {GA && <tr><th scope="row"><code>_ga</code></th><td>Google Analytics</td><td>Distinguishes visitors, only with your consent</td><td>2 years</td></tr>}
+                  {GA && <tr><th scope="row"><code>_ga_&lt;ID&gt;</code></th><td>Google Analytics</td><td>Keeps the state of a visit, only with your consent</td><td>2 years</td></tr>}
+                  {CLARITY && <tr><th scope="row">Clarity cookies</th><td>Microsoft Clarity</td><td>Usage statistics and session replay, only with your consent</td><td>As set by Microsoft</td></tr>}
+                </tbody>
+              </table>
+            </div>
+            <p><button type="button" class="btn btn--navy" data-cookie-settings>Change cookie settings</button></p>
+            <p>You can change your choice at any time with the button above. If you withdraw consent, we stop analytics and remove the analytics cookies this site set in your browser.</p>
+            <p><strong>Global Privacy Control and Do Not Track.</strong> If your browser sends a Global Privacy Control (GPC) signal, we treat it as a refusal of analytics and do not show the consent bar. Browsers do not apply the older “Do Not Track” signal in a consistent way, so we do not respond to it separately; our default is already “no tracking without consent”.</p>
+          </>
+        ) : (
+          <p>This site does not use advertising or analytics cookies. It stores only the technical data needed to work.</p>
+        )}
 
-      <h2 class="h-3">Your rights</h2>
-      <p>You may request access to, correction or deletion of your data, and withdraw your consent at any time{CONTACT.email ? <> by writing to <a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a></> : ' through the contact form'}.</p>
+        <h2 class="h-3" id="recipients">Service providers</h2>
+        <p>We do not sell personal data, rent it or share it with anyone for their own marketing. We use these providers, who process data on our behalf and under their data processing terms:</p>
+        <ul>
+          <li><strong>Vercel Inc.</strong> (United States): website hosting and delivery.</li>
+          <li><strong>Resend</strong> (United States): delivers the contact form message to our inbox.</li>
+          <li><strong>Our business email provider</strong>: stores our correspondence with you.</li>
+          {GA && <li><strong>Google LLC</strong> (United States): Google Tag Manager and Google Analytics, only with your consent.</li>}
+          {CLARITY && <li><strong>Microsoft Corporation</strong> (United States): Microsoft Clarity, only with your consent.</li>}
+          {TURNSTILE && <li><strong>Cloudflare, Inc.</strong> (United States): Turnstile anti-spam check on the contact form.</li>}
+        </ul>
+        <p>We may also disclose data when the law, a court order or a competent authority requires it, or to protect our rights in a legal proceeding.</p>
 
-      <h2 class="h-3">Cookies</h2>
-      <p>This site does not use advertising cookies. {HAS_ANALYTICS ? 'Analytics cookies are only set after you accept them in the consent bar.' : 'No analytics cookies are currently in use.'}</p>
+        <h2 class="h-3" id="transfers">International transfers</h2>
+        <p>We are based in Brazil, and the providers above store data in the United States and other countries. We transfer data only under the safeguards the applicable law requires:</p>
+        <ul>
+          <li><strong>From the EU and EEA to Brazil:</strong> covered by the European Commission’s adequacy decision for Brazil (Commission Implementing Decision (EU) 2026/179 of January 26, 2026). Brazil’s data protection authority (ANPD) adopted the reciprocal decision recognizing the EU (Resolution CD/ANPD No. 32/2026).</li>
+          <li><strong>To the United States:</strong> under the EU-U.S. Data Privacy Framework, for providers certified under it, or under standard contractual clauses. Under the LGPD, under the transfer mechanisms of Article 33, including the standard contractual clauses approved by the ANPD where applicable.</li>
+          <li><strong>From the United Kingdom:</strong> under the safeguards recognized by UK law, such as the UK Extension to the Data Privacy Framework or the UK international data transfer addendum.</li>
+        </ul>
+
+        <h2 class="h-3" id="retention">How long we keep data</h2>
+        <ul>
+          <li><strong>Contact messages that do not lead to a project:</strong> for as long as needed to handle your enquiry and any follow-up you agree to; after that, we delete them. You can ask us to delete them sooner.</li>
+          <li><strong>Data related to a proposal or contract:</strong> for the duration of the relationship and then for the period required by tax, accounting and limitation-period rules.</li>
+          {GA && <li><strong>Analytics:</strong> the cookies last up to 2 years in your browser; event-level data in Google Analytics is kept for no more than 14 months, the maximum allowed for this type of account.</li>}
+          <li><strong>Hosting logs:</strong> for the short period set by our hosting provider for operation and security.</li>
+        </ul>
+
+        <h2 class="h-3" id="rights">Your rights</h2>
+        <p>Whatever country you are in, you can ask us to tell you whether we hold your data, give you a copy, correct it, delete it, or stop using it, and you can withdraw consent at any time. We do not charge for requests and we will not treat you differently for making one. The sections below list the specific rights and the authority you can complain to under each law.</p>
+
+        <h3 class="h-4" id="brazil">Brazil (LGPD, Law No. 13,709/2018)</h3>
+        <p>Under Article 18 of the LGPD, you may request: confirmation that we process your data; access to it; correction of incomplete, inaccurate or outdated data; anonymization, blocking or deletion of unnecessary or excessive data, or of data processed in breach of the law; portability to another provider; deletion of data processed with your consent; information about the public and private entities we share data with; information about the possibility of not giving consent and its consequences; and withdrawal of consent. You may also oppose processing based on another legal basis if it does not comply with the law.</p>
+        <p>We confirm whether we hold your data straight away, in simplified form, and send a complete statement within 15 days of your request (LGPD Art. 19). You may also complain to the Brazilian National Data Protection Authority (ANPD) at <a href="https://www.gov.br/anpd/" rel="noopener" target="_blank">gov.br/anpd</a>.</p>
+
+        <h3 class="h-4" id="eu-uk">European Union, EEA and United Kingdom (GDPR and UK GDPR)</h3>
+        <p>The GDPR (Regulation (EU) 2016/679) applies when we offer our services to, or measure the use of this site by, people in the EU or EEA. The UK GDPR and the Data Protection Act 2018, as amended by the Data (Use and Access) Act 2025, apply in the same way to people in the United Kingdom. You have the right of access (Art. 15), rectification (Art. 16), erasure (Art. 17), restriction (Art. 18), data portability (Art. 20), and to object to processing based on legitimate interest (Art. 21). Where we rely on consent, you may withdraw it at any time, without affecting the processing carried out before.</p>
+        <p>We answer within one month, which the law allows us to extend by two further months for complex requests; if we extend it, we tell you why. You may lodge a complaint with the data protection authority of the EU country where you live or work (list at <a href="https://www.edpb.europa.eu/about-edpb/about-edpb/members_en" rel="noopener" target="_blank">edpb.europa.eu</a>) or, in the UK, with the Information Commissioner’s Office (<a href="https://ico.org.uk/make-a-complaint/" rel="noopener" target="_blank">ico.org.uk</a>). We would appreciate the chance to resolve your concern first.</p>
+
+        <h3 class="h-4" id="us">United States</h3>
+        <p>There is no single federal privacy law in the United States; about twenty states, including California, Virginia, Colorado, Connecticut and Texas, have comprehensive consumer privacy laws. Most apply only above size thresholds that a consultancy of our size may not reach. We nevertheless give US residents the rights those laws provide:</p>
+        <ul>
+          <li><strong>Know and access:</strong> the categories and specific pieces of personal data we hold, where they came from, why we use them and who receives them. The categories we collect are identifiers and contact details (name, email), professional information (area of activity), the content of your message{HAS_ANALYTICS && ', and internet activity (site usage, only with consent)'}. Their sources, purposes and recipients are those described above.</li>
+          <li><strong>Correct</strong> inaccurate data and <strong>delete</strong> your data.</li>
+          <li><strong>Portability:</strong> a copy in a usable format.</li>
+          <li><strong>Opt out of sale, “sharing”, targeted advertising and profiling:</strong> we do not sell personal data, “share” it for cross-context behavioral advertising, use it for targeted advertising, or carry out profiling with legal or similarly significant effects. We honor Global Privacy Control signals, as described in the cookies section.</li>
+          <li><strong>Sensitive data:</strong> we do not knowingly collect it. If you send it to us by mistake, we use it only to answer you, or delete it.</li>
+          <li><strong>Appeal:</strong> if we decline your request, you may appeal by replying to our answer; we will respond within the time set by your state’s law. If you remain unsatisfied, you may contact your state Attorney General or, in California, the California Privacy Protection Agency (<a href="https://cppa.ca.gov" rel="noopener" target="_blank">cppa.ca.gov</a>).</li>
+          <li><strong>Authorized agent:</strong> California residents may use an authorized agent; we may ask for proof of authorization.</li>
+          <li><strong>No discrimination</strong> for exercising any of these rights.</li>
+        </ul>
+        <p>We respond within 45 days, which may be extended once by another 45 days when reasonably necessary; if we extend it, we tell you. This policy also serves as the privacy notice required by the California Online Privacy Protection Act (CalOPPA).</p>
+
+        <h2 class="h-3" id="exercise">How to make a request</h2>
+        <p>Write to us {reach}, saying which right you want to exercise. To protect your data, we may ask you to confirm your identity, usually by replying from the email address you used with us; we will use any extra information only for that check. Someone acting on your behalf must show that they are authorized.</p>
+
+        <h2 class="h-3" id="other">Security, children and automated decisions</h2>
+        <p><strong>Security.</strong> The site is served only over HTTPS. Access to contact messages is restricted to the people who need it to answer you, and our providers apply technical and organizational security measures. If a security incident could cause you significant risk or harm, we will notify the competent authorities and you within the deadlines set by the applicable law.</p>
+        <p><strong>Children.</strong> This site is meant for professionals and is not directed to children or adolescents. We do not knowingly collect data from anyone under 18; if we learn that we have, we delete it.</p>
+        <p><strong>Automated decisions.</strong> We do not make decisions about you based solely on automated processing, including profiling.</p>
+
+        <h2 class="h-3" id="changes">Changes to this policy</h2>
+        <p>We will update this page when the law, our providers or the way we handle data change. The date at the top shows the latest version. If a change materially affects how we use data we already hold, we will highlight it on this page before it takes effect and, where the law requires, ask for your consent again.</p>
+      </div>
     </div>
   </article>
 </BaseLayout>
+
+{HAS_ANALYTICS && (
+  <script>
+    // Reabre a barra de consentimento (ConsentBar escuta este evento).
+    document.querySelector('[data-cookie-settings]')?.addEventListener('click', () => document.dispatchEvent(new CustomEvent('dsci:consent-open')));
+  </script>
+)}
+
 <style>
   .legal-hero { background: var(--navy); padding: 170px 0 64px; }
   .legal-hero .wrap { display: grid; gap: 14px; }
   .muted-light { color: rgba(255,255,255,.7); }
-  .legal__body { max-width: 760px; display: grid; gap: 14px; }
-  .legal__body h2 { color: var(--navy); margin-top: 18px; }
-  .legal__body p { color: var(--muted); }
+  .legal-hero__laws { font: 500 0.85rem/1.5 var(--f-ui); letter-spacing: 0.04em; color: var(--mint); }
+
+  .legal__layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 56px; align-items: start; }
+  .legal__toc { position: sticky; top: 110px; font-size: 0.92rem; }
+  .legal__toc-title { font: 600 0.75rem/1 var(--f-ui); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+  .legal__toc ol { list-style: none; display: grid; gap: 8px; padding: 0; margin: 0; border-left: 2px solid var(--line); }
+  .legal__toc a { display: block; padding-left: 14px; color: var(--muted); text-decoration: none; }
+  .legal__toc a:hover { color: var(--navy); }
+
+  .legal__body { max-width: 780px; display: grid; gap: 14px; }
+  .legal__body h2 { color: var(--navy); margin-top: 22px; scroll-margin-top: 110px; }
+  .legal__body h3 { color: var(--navy); margin-top: 12px; scroll-margin-top: 110px; font-size: 1.12rem; }
+  .legal__body h2:first-child { margin-top: 0; }
+  .legal__body p, .legal__body li { color: var(--muted); }
+  .legal__body ul { display: grid; gap: 8px; padding-left: 1.2em; }
+  .legal__body strong { color: var(--ink); }
+  .glance { list-style: none; padding: 20px 22px !important; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--alice); }
+
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r-lg); }
+  table { width: 100%; min-width: 620px; border-collapse: collapse; font-size: 0.94rem; }
+  th, td { text-align: left; vertical-align: top; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+  thead th { background: var(--alice); color: var(--navy); font: 600 0.78rem/1.3 var(--f-ui); letter-spacing: 0.06em; text-transform: uppercase; }
+  tbody th { color: var(--ink); font-weight: 600; }
+  tbody td { color: var(--muted); }
+  tbody tr:last-child > * { border-bottom: 0; }
+  code { font-size: 0.88em; }
+
+  @media (max-width: 960px) {
+    .legal__layout { grid-template-columns: 1fr; gap: 28px; }
+    .legal__toc { position: static; }
+  }
 </style>
