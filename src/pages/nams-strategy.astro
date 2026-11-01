@@ -153,11 +153,12 @@ const jsonLd = graph(
   const last = tl?.querySelector<HTMLElement>('.timeline__item:last-child .timeline__n');
   if (tl && last) {
     // offsetTop (layout) e não getBoundingClientRect: ignora o deslocamento da animação de entrada.
+    // Só dentro do ResizeObserver (dispara ao observar e roda DEPOIS do layout): medir direto no
+    // carregamento forçava um reflow de ~55 ms no PageSpeed.
     const fit = () => {
       const end = tl.offsetHeight - (last.parentElement!.offsetTop + last.offsetTop + last.offsetHeight / 2);
       tl.style.setProperty('--rail-end', `${Math.max(0, Math.round(end))}px`);
     };
-    fit();
     new ResizeObserver(fit).observe(tl);
   }
 </script>

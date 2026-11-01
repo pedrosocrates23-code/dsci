@@ -6,6 +6,28 @@
 @import '@fontsource-variable/sora/wght.css';
 @import '@fontsource-variable/source-sans-3/wght.css';
 
+/* Fontes de RESERVA com métricas ajustadas: enquanto a Sora e a Source Sans 3 baixam, o texto sai
+   em Arial (ou Liberation Sans no Linux, mesmas métricas) redimensionada para ocupar o MESMO espaço.
+   Sem isso, a troca de fonte mudava a altura do título e do parágrafo do hero e o bloco "pulava"
+   (CLS 0,17 na home com 4G lento). Valores medidos nos próprios .woff2 com fontTools, pela largura
+   média de um texto do site (método do next/font e do capsize), no peso usado de fato. */
+@font-face {
+  font-family: 'Sora Fallback'; src: local('Arial'), local('Liberation Sans'), local('Helvetica'); font-weight: 100 500;
+  size-adjust: 113.87%; ascent-override: 85.18%; descent-override: 25.47%; line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'Sora Fallback'; src: local('Arial Bold'), local('Arial-BoldMT'), local('Liberation Sans Bold'), local('Helvetica Bold'); font-weight: 501 900;
+  size-adjust: 106.95%; ascent-override: 90.70%; descent-override: 27.12%; line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'Source Sans 3 Fallback'; src: local('Arial'), local('Liberation Sans'), local('Helvetica'); font-weight: 100 500;
+  size-adjust: 93.65%; ascent-override: 109.34%; descent-override: 42.71%; line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'Source Sans 3 Fallback'; src: local('Arial Bold'), local('Arial-BoldMT'), local('Liberation Sans Bold'), local('Helvetica Bold'); font-weight: 501 900;
+  size-adjust: 89.46%; ascent-override: 114.46%; descent-override: 44.71%; line-gap-override: 0%;
+}
+
 :root {
   --navy: #0a2f5b;
   --navy-deep: #061b36;
@@ -19,8 +41,8 @@
   --line: #c9d6e1;
   --line-dark: rgba(255, 255, 255, 0.16);
 
-  --f-display: 'Sora Variable', 'Sora', ui-sans-serif, system-ui, sans-serif;
-  --f-text: 'Source Sans 3 Variable', 'Source Sans 3', ui-sans-serif, system-ui, sans-serif;
+  --f-display: 'Sora Variable', 'Sora Fallback', ui-sans-serif, system-ui, sans-serif;
+  --f-text: 'Source Sans 3 Variable', 'Source Sans 3 Fallback', ui-sans-serif, system-ui, sans-serif;
   /* Menu em "vidro": a pilha do sistema dá o aspecto Apple (SF Pro no Mac/iOS). */
   --f-ui: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
 

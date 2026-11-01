@@ -32,7 +32,7 @@ export const IMAGE_ALT: Record<ImageKey, string> = {
 
 /** Mesmos parâmetros no <Picture> do hero e no preload do <head> (precisam gerar as mesmas URLs). */
 export const HERO_WIDTHS = [480, 768, 1024, 1366, 1600, 1920, 2400];
-export const HERO_QUALITY = 68;
+export const HERO_QUALITY = 50; // 68 -> 50 (2026-10-31): -43% no arquivo, sem diferença visível nas fotos escuras (alerta de entrega de imagem do PageSpeed)
 
 export function getImage(key: ImageKey): ImageMetadata | null {
   const hit = Object.entries(files).find(([path]) => path.split('/').pop()!.replace(/\.[^.]+$/, '') === key);

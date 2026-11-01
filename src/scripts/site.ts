@@ -9,12 +9,20 @@ import { bootMotion } from './motion-boot';
 // Header: estado "rolado" (a logo sai e o "Home" entra na barra de vidro)
 const header = document.querySelector<HTMLElement>('[data-header]');
 const home = header?.querySelector<HTMLAnchorElement>('.glassbar__home');
+// Leitura do scrollY sempre dentro de um requestAnimationFrame e só uma vez por quadro: ler logo
+// que o script roda forçava o cálculo de layout da página inteira (reflow forçado de ~49 ms no PageSpeed).
 if (header) {
-  const onScroll = () => {
-    const scrolled = window.scrollY > 48;
-    header.classList.toggle('is-scrolled', scrolled);
-    if (home) home.tabIndex = scrolled ? 0 : -1;
+  let scrolled: boolean | null = null;
+  let queued = false;
+  const update = () => {
+    queued = false;
+    const next = window.scrollY > 48;
+    if (next === scrolled) return;
+    scrolled = next;
+    header.classList.toggle('is-scrolled', next);
+    if (home) home.tabIndex = next ? 0 : -1;
   };
+  const onScroll = () => { if (!queued) { queued = true; requestAnimationFrame(update); } };
   onScroll();
   window.addEventListener('scroll', onScroll, { passive: true });
 }
