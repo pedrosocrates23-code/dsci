@@ -12,6 +12,8 @@ const authors = defineCollection({
     honorificSuffix: z.string().optional(),
     orcid: z.url(),
     openalex: z.url().optional(),
+    /** Perfil pessoal no LinkedIn (informado pela usuária em 2026-11-01). Entra no sameAs da Person. */
+    linkedin: z.url().optional(),
     /** Mini bio canônica em inglês (ficha da entidade). */
     bio: z.string().min(80),
     alumniOf: z.object({ name: z.string(), wikidata: z.url() }),

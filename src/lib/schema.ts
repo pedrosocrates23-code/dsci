@@ -110,7 +110,7 @@ export function faqNode(path: string, items: { q: string; a: string }[]): Node {
   };
 }
 
-export function personNode(author: { name: string; honorificSuffix?: string; bio: string; orcid: string; openalex?: string; alumniOf: { name: string; wikidata: string } }, path: string): Node {
+export function personNode(author: { name: string; honorificSuffix?: string; bio: string; orcid: string; openalex?: string; linkedin?: string; alumniOf: { name: string; wikidata: string } }, path: string): Node {
   return {
     '@type': 'Person',
     '@id': author.orcid,
@@ -119,7 +119,7 @@ export function personNode(author: { name: string; honorificSuffix?: string; bio
     url: abs(path),
     description: author.bio,
     alumniOf: { '@type': 'CollegeOrUniversity', name: author.alumniOf.name, sameAs: author.alumniOf.wikidata },
-    sameAs: [author.orcid, author.openalex].filter(Boolean),
+    sameAs: [author.orcid, author.openalex, author.linkedin].filter(Boolean),
   };
 }
 

@@ -1,8 +1,13 @@
 ---
 import Logo from './Logo.astro';
+import { getEntry } from 'astro:content';
 import { BRAND, CONTACT, NAV } from '../config/site';
 
 const year = 2026;
+// LinkedIn da autora no rodapé (pedido da usuária, 2026-11-01). Perfil PESSOAL: fica fora do
+// sameAs da Organization (schema.ts usa só CONTACT.linkedin, que é o da empresa).
+const author = await getEntry('authors', 'jordana-andrade-santos');
+const authorLinkedin = author?.data.linkedin;
 ---
 <footer class="site-footer on-dark">
   <div class="wrap site-footer__grid">
@@ -25,6 +30,7 @@ const year = 2026;
       <ul>
         {CONTACT.email && <li><a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a></li>}
         {CONTACT.linkedin && <li><a href={CONTACT.linkedin} rel="me noopener" target="_blank">LinkedIn</a></li>}
+        {authorLinkedin && <li><a href={authorLinkedin} rel="noopener" target="_blank" aria-label={`${author!.data.name} on LinkedIn`}>LinkedIn{CONTACT.linkedin && ` · ${author!.data.name}`}</a></li>}
         <li>{BRAND.location} · {BRAND.service.toLowerCase()}</li>
         <li><a href="/contact/">Request a proposal</a></li>
       </ul>
@@ -33,7 +39,7 @@ const year = 2026;
 
   <div class="wrap site-footer__legal">
     <p>© {year} {BRAND.name}{CONTACT.cnpj && <> · CNPJ {CONTACT.cnpj}</>}</p>
-    <a href="/privacy-policy/">Privacy policy (LGPD)</a>
+    <a href="/privacy-policy/">Privacy policy</a>
   </div>
 </footer>
 

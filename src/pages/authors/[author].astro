@@ -43,6 +43,7 @@ const orcidNum = a.orcid.split('/').pop();
       <dl class="ids" aria-label="Identifiers">
         <div><dt>ORCID</dt><dd><a href={a.orcid} rel="noopener" target="_blank">{orcidNum}</a></dd></div>
         {a.openalex && <div><dt>OpenAlex</dt><dd><a href={a.openalex} rel="noopener" target="_blank">Author profile</a></dd></div>}
+        {a.linkedin && <div><dt>LinkedIn</dt><dd><a href={a.linkedin} rel="me noopener" target="_blank">Profile</a></dd></div>}
       </dl>
     </div>
   </section>
