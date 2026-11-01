@@ -1,19 +1,299 @@
 ---
+/**
+ * 404 animada (pedido da usuária, 2026-11-01): página de erro "cheia de movimento" com GSAP.
+ *
+ * O "0" do 404 é um anel de benzeno (hexágono + círculo aromático) que gira, sobre uma rede
+ * de moléculas que se desenha no fundo. Tudo em SVG: o texto e os botões existem no HTML e
+ * funcionam sem JS. Com prefers-reduced-motion, a página fica parada (nenhuma animação).
+ *
+ *   entrada      rede (DrawSVG), dígitos traçados, título letra a letra (SplitText),
+ *                referência e status embaralhados (ScrambleText)
+ *   em repouso   átomos flutuando, anel girando, linha de varredura, status alternando
+ *   cursor       paralaxe em camadas + brilho que segue o mouse
+ *   clique/toque no 404: explosão de partículas (Physics2D) e giro rápido do anel
+ *
+ * noindex: fica fora do sitemap. Peso do GSAP não importa aqui (página de erro, sem LCP a disputar).
+ */
 import BaseLayout from '../layouts/BaseLayout.astro';
+
+// Rede de moléculas do fundo: posições fixas (semente), cada átomo ligado aos 2 vizinhos mais próximos.
+let seed = 11;
+const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const W = 1440;
+const H = 900;
+const nodes = Array.from({ length: 34 }, () => ({ x: Math.round(rnd() * W), y: Math.round(rnd() * H), r: 2 + Math.round(rnd() * 3) }));
+const edges: [number, number][] = [];
+nodes.forEach((a, i) => {
+  nodes
+    .map((b, j) => ({ j, d: (a.x - b.x) ** 2 + (a.y - b.y) ** 2 }))
+    .filter((o) => o.j !== i)
+    .sort((p, q) => p.d - q.d)
+    .slice(0, 2)
+    .forEach(({ j }) => {
+      if (!edges.some(([p, q]) => (p === i && q === j) || (p === j && q === i))) edges.push([i, j]);
+    });
+});
+
+// Anel de benzeno no lugar do "0": hexágono de ponta para cima, centro (320, 140).
+const CX = 320;
+const CY = 140;
+const R = 104;
+const hex = Array.from({ length: 6 }, (_, k) => {
+  const a = ((-90 + 60 * k) * Math.PI) / 180;
+  return { x: Math.round(CX + R * Math.cos(a)), y: Math.round(CY + R * Math.sin(a)) };
+});
+const hexPoints = hex.map((p) => `${p.x},${p.y}`).join(' ');
+// Dois substituintes (ligação + átomo), saindo dos vértices 1 e 4.
+const subs = [1, 4].map((k) => {
+  const a = ((-90 + 60 * k) * Math.PI) / 180;
+  return { x1: hex[k].x, y1: hex[k].y, x2: Math.round(CX + (R + 52) * Math.cos(a)), y2: Math.round(CY + (R + 52) * Math.sin(a)) };
+});
 ---
 <BaseLayout title="Page not found | D-Sci Consulting" description="The page you are looking for does not exist." path="/404/" noindex>
-  <section class="nf on-dark">
-    <div class="wrap">
-      <h1 class="h-1">This page does not exist.</h1>
-      <div class="nf__links">
+  <section class="nf on-dark" data-nf>
+    {/* Esconde só o que vai animar, e só se a animação vai rodar; se o script falhar, volta em 3 s. */}
+    <script is:inline>
+      if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        document.documentElement.classList.add('nf-anim');
+        setTimeout(function () { if (!document.documentElement.classList.contains('nf-ready')) document.documentElement.classList.remove('nf-anim'); }, 3000);
+      }
+    </script>
+
+    <svg class="nf__net" data-nf-net viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <g class="nf__bonds">
+        {edges.map(([i, j]) => <line x1={nodes[i].x} y1={nodes[i].y} x2={nodes[j].x} y2={nodes[j].y} />)}
+      </g>
+      <g class="nf__atoms">
+        {nodes.map((n) => <circle cx={n.x} cy={n.y} r={n.r} />)}
+      </g>
+    </svg>
+    <div class="nf__glow" data-nf-glow aria-hidden="true"></div>
+
+    <div class="wrap nf__inner">
+      <div class="nf__visual" data-nf-visual aria-hidden="true">
+        <svg class="nf__digits" viewBox="0 0 640 290" data-nf-digits>
+          <defs>
+            <linearGradient id="nf-scan" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0" stop-color="#00c896" stop-opacity="0" />
+              <stop offset="1" stop-color="#00c896" stop-opacity="0.55" />
+            </linearGradient>
+          </defs>
+          <g class="nf__four" data-nf-four>
+            <path class="nf__stroke" d="M138 262 V30 L24 196 H188" />
+          </g>
+          <g class="nf__ring" data-nf-ring>
+            <polygon class="nf__stroke" points={hexPoints} />
+            <circle class="nf__aromatic" data-nf-aromatic cx={CX} cy={CY} r="58" />
+            {subs.map((s) => <line class="nf__sub" x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2} />)}
+            {subs.map((s) => <circle class="nf__subatom" cx={s.x2} cy={s.y2} r="9" />)}
+            {hex.map((p) => <circle class="nf__vertex" cx={p.x} cy={p.y} r="10" />)}
+          </g>
+          <g class="nf__four" data-nf-four>
+            <path class="nf__stroke" d="M590 262 V30 L476 196 H640" transform="translate(-4 0)" />
+          </g>
+          <rect class="nf__scan" data-nf-scan x="0" y="0" width="640" height="46" fill="url(#nf-scan)" />
+        </svg>
+        <div class="nf__burst" data-nf-burst></div>
+      </div>
+
+      <p class="nf__ref" data-nf-in>
+        <span class="nf__ref-label">Ref.</span>
+        <code data-nf-path>/this-page/</code>
+        <span class="nf__status" data-nf-status>Not found</span>
+      </p>
+      <h1 class="h-1 nf__title" data-nf-title>This page is not in the dossier.</h1>
+      <p class="lead nf__lead" data-nf-in>The link may be outdated, or the address has a small typo. Everything else is where it should be.</p>
+      <div class="nf__links" data-nf-in>
         <a class="btn" href="/">Go to the home page</a>
+        <a class="btn btn--ghost" href="/services/">See our services</a>
         <a class="btn btn--ghost" href="/contact/">Contact</a>
       </div>
     </div>
   </section>
 </BaseLayout>
+
+<script>
+  import { gsap } from 'gsap';
+  import { SplitText } from 'gsap/SplitText';
+  import { DrawSVGPlugin } from 'gsap/DrawSVGPlugin';
+  import { ScrambleTextPlugin } from 'gsap/ScrambleTextPlugin';
+  import { Physics2DPlugin } from 'gsap/Physics2DPlugin';
+
+  const root = document.querySelector<HTMLElement>('[data-nf]');
+  const pathEl = root?.querySelector<HTMLElement>('[data-nf-path]');
+  const path = location.pathname.length > 42 ? location.pathname.slice(0, 40) + '…' : location.pathname;
+  if (pathEl) pathEl.textContent = path;
+
+  const html = document.documentElement;
+  if (root && html.classList.contains('nf-anim')) {
+    gsap.registerPlugin(SplitText, DrawSVGPlugin, ScrambleTextPlugin, Physics2DPlugin);
+    const q = <T extends Element = SVGElement>(s: string) => [...root.querySelectorAll<T>(s)];
+    const net = root.querySelector('[data-nf-net]')!;
+    const glow = root.querySelector<HTMLElement>('[data-nf-glow]')!;
+    const visual = root.querySelector<HTMLElement>('[data-nf-visual]')!;
+    const digits = root.querySelector('[data-nf-digits]')!;
+    const ring = root.querySelector('[data-nf-ring]')!;
+    const status = root.querySelector<HTMLElement>('[data-nf-status]')!;
+    const burst = root.querySelector<HTMLElement>('[data-nf-burst]')!;
+    const title = SplitText.create('[data-nf-title]', { type: 'words,chars', mask: 'words' });
+
+    html.classList.add('nf-ready');
+
+    // ---- Entrada --------------------------------------------------------------------------
+    gsap.set([...q('[data-nf-in]'), '[data-nf-title]'], { autoAlpha: 1 });
+    gsap.set(q('.nf__vertex, .nf__subatom, .nf__atoms circle'), { transformOrigin: '50% 50%' });
+    const intro = gsap.timeline({ defaults: { ease: 'power3.out' } });
+    intro
+      .from(q('.nf__bonds line'), { drawSVG: 0, duration: 1.4, stagger: { each: 0.025, from: 'random' }, ease: 'power2.inOut' }, 0)
+      .from(q('.nf__atoms circle'), { scale: 0, duration: 0.6, stagger: { each: 0.03, from: 'random' }, ease: 'back.out(3)' }, 0.2)
+      .from(q('.nf__stroke'), { drawSVG: 0, duration: 1.1, stagger: 0.18, ease: 'power2.inOut' }, 0.15)
+      .from(ring, { rotation: -120, scale: 0.6, svgOrigin: '320 140', duration: 1.4, ease: 'expo.out' }, 0.3)
+      .from(q('.nf__sub'), { drawSVG: 0, duration: 0.5, stagger: 0.1 }, 0.9)
+      .from(q('.nf__vertex, .nf__subatom'), { scale: 0, duration: 0.5, stagger: 0.05, ease: 'back.out(4)' }, 0.95)
+      .from('[data-nf-aromatic]', { drawSVG: '50% 50%', duration: 0.8 }, 1.05)
+      .from(q('[data-nf-in]').slice(0, 1), { y: 16, autoAlpha: 0, duration: 0.5 }, 0.9)
+      .to(pathEl!, { duration: 0.9, scrambleText: { text: path, chars: '/abcdefghijklmnopqrstuvwxyz-', speed: 0.6 } }, 0.95)
+      .from(status, { duration: 0.9, scrambleText: { text: '', chars: 'upperCase', speed: 0.5 } }, 1.1)
+      .from(title.chars, { yPercent: 110, rotation: 6, duration: 0.8, stagger: 0.018, ease: 'expo.out' }, 1.0)
+      .from(q('[data-nf-in]').slice(1), { y: 24, autoAlpha: 0, duration: 0.7, stagger: 0.12 }, 1.5)
+      .from(q('.nf__links .btn'), { y: 18, scale: 0.94, duration: 0.6, stagger: 0.08, ease: 'back.out(2)' }, 1.65);
+
+    // ---- Em repouso ----------------------------------------------------------------------
+    intro.add(() => {
+      gsap.to(ring, { rotation: '+=360', svgOrigin: '320 140', duration: 38, repeat: -1, ease: 'none' });
+      gsap.to('[data-nf-aromatic]', { scale: 1.12, transformOrigin: '50% 50%', duration: 1.6, repeat: -1, yoyo: true, ease: 'sine.inOut' });
+      q('[data-nf-four]').forEach((g, i) =>
+        gsap.to(g, { y: i ? 7 : -7, rotation: i ? -1.5 : 1.5, transformOrigin: '50% 100%', duration: 2.6 + i * 0.4, repeat: -1, yoyo: true, ease: 'sine.inOut' }),
+      );
+      q('.nf__atoms circle').forEach((c) =>
+        gsap.to(c, { x: gsap.utils.random(-14, 14), y: gsap.utils.random(-14, 14), duration: gsap.utils.random(3, 6), repeat: -1, yoyo: true, ease: 'sine.inOut' }),
+      );
+      gsap.to(q('.nf__vertex'), { scale: 1.35, duration: 0.5, stagger: { each: 0.25, repeat: -1, yoyo: true, repeatDelay: 1.2 }, ease: 'sine.inOut' });
+      gsap.fromTo('[data-nf-scan]', { y: -46, autoAlpha: 1 }, { y: 290, duration: 2.8, repeat: -1, repeatDelay: 1.6, ease: 'power1.inOut' });
+
+      // Status do "laudo" alternando: NOT FOUND -> SEARCHING THE INDEX -> NOT FOUND.
+      gsap.timeline({ repeat: -1, repeatDelay: 3.5, delay: 2.5 })
+        .to(status, { duration: 0.9, scrambleText: { text: 'Searching the index', chars: 'upperCase', speed: 0.5 } })
+        .to(status, { duration: 0.9, delay: 1.6, scrambleText: { text: 'Not found', chars: 'upperCase', speed: 0.5 } });
+    });
+
+    // ---- Cursor: paralaxe em camadas + brilho -------------------------------------------
+    if (matchMedia('(pointer: fine)').matches) {
+      const netX = gsap.quickTo(net, 'x', { duration: 1.2, ease: 'power3.out' });
+      const netY = gsap.quickTo(net, 'y', { duration: 1.2, ease: 'power3.out' });
+      const digX = gsap.quickTo(digits, 'x', { duration: 0.9, ease: 'power3.out' });
+      const digY = gsap.quickTo(digits, 'y', { duration: 0.9, ease: 'power3.out' });
+      const glowX = gsap.quickTo(glow, 'x', { duration: 0.6, ease: 'power3.out' });
+      const glowY = gsap.quickTo(glow, 'y', { duration: 0.6, ease: 'power3.out' });
+      // A medida só acontece no movimento do mouse, nunca no carregamento (sem reflow forçado na entrada).
+      root.addEventListener('pointermove', (e) => {
+        const r = root.getBoundingClientRect();
+        const nx = (e.clientX - r.left) / r.width - 0.5;
+        const ny = (e.clientY - r.top) / r.height - 0.5;
+        netX(nx * -36); netY(ny * -24);
+        digX(nx * 22); digY(ny * 16);
+        glowX(e.clientX - r.left); glowY(e.clientY - r.top);
+      });
+      root.addEventListener('pointerenter', () => gsap.to(glow, { autoAlpha: 1, duration: 0.6 }));
+      root.addEventListener('pointerleave', () => gsap.to(glow, { autoAlpha: 0, duration: 0.6 }));
+    }
+
+    // ---- Clique/toque no 404: partículas + giro do anel --------------------------------
+    const colors = ['#00c896', '#ffffff', '#3e6b8c', '#7fe6c9'];
+    visual.addEventListener('pointerdown', (e) => {
+      const r = visual.getBoundingClientRect();
+      const x = e.clientX - r.left;
+      const y = e.clientY - r.top;
+      for (let i = 0; i < 28; i++) {
+        const p = document.createElement('i');
+        p.className = 'nf__p';
+        const size = gsap.utils.random(4, 11);
+        Object.assign(p.style, { left: `${x}px`, top: `${y}px`, width: `${size}px`, height: `${size}px`, background: colors[i % colors.length] });
+        burst.appendChild(p);
+        gsap.to(p, {
+          duration: gsap.utils.random(1.1, 1.8),
+          physics2D: { velocity: gsap.utils.random(220, 620), angle: gsap.utils.random(0, 360), gravity: 900 },
+          autoAlpha: 0,
+          scale: 0.3,
+          ease: 'none',
+          onComplete: () => p.remove(),
+        });
+      }
+      gsap.to(ring, { rotation: '+=240', svgOrigin: '320 140', duration: 1.2, ease: 'expo.out' });
+      gsap.fromTo(q('[data-nf-four]'), { scaleY: 0.82, scaleX: 1.08 }, { scaleY: 1, scaleX: 1, transformOrigin: '50% 100%', duration: 0.9, ease: 'elastic.out(1.1, 0.35)', overwrite: 'auto' });
+    });
+  }
+</script>
+
 <style>
-  .nf { background: var(--navy); min-height: 80svh; display: flex; align-items: center; padding: 160px 0 80px; }
-  .nf .wrap { display: grid; gap: 20px; }
-  .nf__links { display: flex; gap: 12px; flex-wrap: wrap; }
+  .nf {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    min-height: 100svh;
+    display: flex;
+    align-items: center;
+    padding: 140px 0 90px;
+    background: radial-gradient(120% 90% at 50% 0%, var(--navy) 0%, var(--navy-deep) 70%);
+  }
+  :global(html.nf-anim:not(.nf-ready)) .nf [data-nf-in],
+  :global(html.nf-anim:not(.nf-ready)) .nf [data-nf-title],
+  :global(html.nf-anim:not(.nf-ready)) .nf__visual { visibility: hidden; }
+
+  .nf__net { position: absolute; inset: -40px; width: calc(100% + 80px); height: calc(100% + 80px); z-index: -2; }
+  .nf__bonds line { stroke: rgba(255, 255, 255, 0.12); stroke-width: 1; }
+  .nf__atoms circle { fill: rgba(0, 200, 150, 0.55); }
+  .nf__glow {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: -1;
+    width: 520px;
+    height: 520px;
+    margin: -260px 0 0 -260px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0, 200, 150, 0.16) 0%, rgba(0, 200, 150, 0) 65%);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .nf__inner { display: grid; justify-items: center; text-align: center; gap: 18px; }
+  .nf__visual { position: relative; width: min(560px, 100%); margin-bottom: 18px; cursor: pointer; touch-action: manipulation; }
+  .nf__digits { display: block; width: 100%; height: auto; overflow: visible; }
+  .nf__stroke { fill: none; stroke: var(--white); stroke-width: 20; stroke-linecap: round; stroke-linejoin: round; }
+  .nf__aromatic { fill: none; stroke: var(--mint); stroke-width: 6; }
+  .nf__sub { stroke: rgba(255, 255, 255, 0.7); stroke-width: 6; stroke-linecap: round; }
+  .nf__subatom { fill: var(--navy-deep); stroke: var(--mint); stroke-width: 4; }
+  .nf__vertex { fill: var(--mint); }
+  .nf__scan { opacity: 0; visibility: hidden; mix-blend-mode: screen; pointer-events: none; }
+  .nf__burst { position: absolute; inset: 0; pointer-events: none; }
+  .nf__burst :global(.nf__p) { position: absolute; margin: -5px 0 0 -5px; border-radius: 50%; }
+
+  .nf__ref {
+    display: inline-flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    padding: 8px 14px;
+    border: 1px solid var(--glass-border);
+    border-radius: 999px;
+    background: var(--glass-bg);
+    box-shadow: var(--glass-shine);
+    backdrop-filter: blur(10px);
+    font: 500 0.82rem/1.3 var(--f-ui);
+  }
+  .nf__ref-label { color: rgba(255, 255, 255, 0.6); text-transform: uppercase; letter-spacing: 0.12em; }
+  .nf__ref code { color: var(--white); font-family: ui-monospace, 'SF Mono', Consolas, monospace; word-break: break-all; }
+  .nf__status { color: var(--mint); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 600; min-width: 11ch; }
+  .nf__title { max-width: 18ch; margin: 6px 0 0; }
+  .nf__lead { max-width: 52ch; margin: 0; }
+  .nf__links { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 10px; }
+
+  @media (max-width: 640px) {
+    .nf { padding: 120px 0 64px; }
+    .nf__links { width: 100%; }
+  }
 </style>
