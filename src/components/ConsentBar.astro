@@ -1,6 +1,6 @@
 ---
 /** Barra de consentimento discreta, fixa no rodapé, não modal (o prompt veta pop-up).
- *  Só é renderizada quando há PUBLIC_GA4_ID. Consentimento desmarcado por padrão (LGPD). */
+ *  Só é renderizada quando há ferramenta de medição (GA4, GTM ou Clarity). Consentimento desmarcado por padrão (LGPD). */
 ---
 <div class="consent" role="region" aria-label="Cookie consent" data-consent hidden>
   <p>We use analytics cookies only with your consent, to understand how the site is used. <a href="/privacy-policy/">Privacy policy</a></p>
@@ -17,8 +17,10 @@
   if (bar && !stored) bar.hidden = false;
   const decide = (value: 'granted' | 'denied') => {
     try { localStorage.setItem('dsci-consent', value); } catch {}
-    const w = window as unknown as { gtag?: (...a: unknown[]) => void };
+    const w = window as unknown as { gtag?: (...a: unknown[]) => void; clarity?: (...a: unknown[]) => void };
     w.gtag?.('consent', 'update', { analytics_storage: value });
+    // Clarity só existe depois dos 3 s; se a escolha vier antes, o carregador lê o localStorage.
+    if (value === 'granted') w.clarity?.('consent'); else w.clarity?.('consent', false);
     if (bar) bar.hidden = true;
   };
   bar?.querySelector('[data-consent-allow]')?.addEventListener('click', () => decide('granted'));

@@ -2,11 +2,17 @@
 /** Política simples (prompt, seção 10). Texto a revisar pelo jurídico da cliente (N7: GDPR). */
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { PAGES } from '../config/pages';
-import { BRAND, CONTACT, INTEGRATIONS } from '../config/site';
+import { BRAND, CONTACT, INTEGRATIONS, HAS_ANALYTICS } from '../config/site';
 import { graph, websiteNode, webPageNode, breadcrumbNode, orgRef } from '../lib/schema';
 
 const meta = PAGES.privacy;
 const crumbs = [{ name: 'Home', path: '/' }, { name: 'Privacy policy', path: meta.path }];
+// Ferramentas de medição ativas, no texto de cookies (só o que está de fato ligado).
+const analyticsTools = [
+  INTEGRATIONS.gtm && 'analytics tags loaded through Google Tag Manager',
+  INTEGRATIONS.ga4 && 'Google Analytics',
+  INTEGRATIONS.clarity && 'Microsoft Clarity',
+].filter(Boolean).join(' and ');
 const jsonLd = graph(websiteNode(), webPageNode({ path: meta.path, name: meta.title, description: meta.description, crumbs, about: orgRef }), breadcrumbNode(meta.path, crumbs));
 ---
 <BaseLayout title={meta.title} description={meta.description} path={meta.path} jsonLd={jsonLd}>
@@ -25,7 +31,7 @@ const jsonLd = graph(websiteNode(), webPageNode({ path: meta.path, name: meta.ti
       <p>We use these data only to reply to your contact, schedule a diagnostic meeting and prepare a proposal, based on the consent you give when you submit the form.</p>
 
       <h2 class="h-3">Who processes it</h2>
-      <p>The site is hosted by Vercel, and form messages are delivered by a transactional email provider. These providers process the data only to deliver this service.{INTEGRATIONS.ga4 && ' If you accept analytics cookies, Google Analytics measures how the site is used; without your consent, no analytics cookie is set.'}</p>
+      <p>The site is hosted by Vercel, and form messages are delivered by a transactional email provider. These providers process the data only to deliver this service.{HAS_ANALYTICS && ` If you accept analytics cookies, we measure how the site is used with ${analyticsTools}; without your consent, no analytics cookie is set.`}</p>
 
       <h2 class="h-3">How long we keep it</h2>
       <p>We keep contact data for as long as needed to respond and, if a project follows, for the duration of the business relationship.</p>
@@ -34,7 +40,7 @@ const jsonLd = graph(websiteNode(), webPageNode({ path: meta.path, name: meta.ti
       <p>You may request access to, correction or deletion of your data, and withdraw your consent at any time{CONTACT.email ? <> by writing to <a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a></> : ' through the contact form'}.</p>
 
       <h2 class="h-3">Cookies</h2>
-      <p>This site does not use advertising cookies. {INTEGRATIONS.ga4 ? 'Analytics cookies are only set after you accept them in the consent bar.' : 'No analytics cookies are currently in use.'}</p>
+      <p>This site does not use advertising cookies. {HAS_ANALYTICS ? 'Analytics cookies are only set after you accept them in the consent bar.' : 'No analytics cookies are currently in use.'}</p>
     </div>
   </article>
 </BaseLayout>

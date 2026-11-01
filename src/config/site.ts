@@ -33,8 +33,16 @@ export const CONTACT = {
 
 export const INTEGRATIONS = {
   ga4: (env.PUBLIC_GA4_ID as string | undefined) || null,
+  /** Google Tag Manager: contêiner informado pela usuária em 2026-10-31. PUBLIC_GTM_ID troca;
+   *  PUBLIC_GTM_ID vazio desliga. */
+  gtm: ((env.PUBLIC_GTM_ID as string | undefined) ?? 'GTM-WPRVL288') || null,
+  /** Microsoft Clarity: ID do projeto (ainda não informado). */
+  clarity: (env.PUBLIC_CLARITY_ID as string | undefined) || null,
   turnstileSiteKey: (env.PUBLIC_TURNSTILE_SITE_KEY as string | undefined) || null,
 };
+
+/** Há alguma ferramenta de medição ligada (barra de consentimento e textos de cookies dependem disto). */
+export const HAS_ANALYTICS = Boolean(INTEGRATIONS.ga4 || INTEGRATIONS.gtm || INTEGRATIONS.clarity);
 
 /**
  * Autoria (decisão de 2026-10-31 + R1/D11 do plano v2).

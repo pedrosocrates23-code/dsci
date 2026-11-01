@@ -61,6 +61,7 @@ O que sustenta a nota (não desfazer sem medir de novo):
 - **GSAP carregado só depois do evento `load`**, quando o navegador fica ocioso.
 - **Fontes:** as duas (Sora e Source Sans 3) são pré-carregadas, o que zera o deslocamento de layout na troca de fonte.
 - **Hover sem animar espaçamento ou tamanho:** só `transform`, `opacity` e cores.
+- **Tags de medição atrasadas:** GTM, GA4 e Clarity são injetados 3 s depois do evento `load` (`BaseLayout.astro`), só no build de produção. Antes disso já existem `dataLayer`, `gtag` e o Consent Mode negado por padrão; a barra de consentimento libera `analytics_storage` e o Clarity. O envio do formulário dispara `generate_lead` por `gtag` e por `dataLayer.push` (gatilho de evento personalizado no GTM).
 - **Imagens de apoio das seções (`SectionImage`) dentro de `<noscript>`:** o `site.ts` só as injeta 1,2 s depois do `load` (ou na 1ª rolagem/toque), quando chegam perto da tela. Com `loading="lazy"` comum, as fotos perto do topo disputavam banda com a foto do hero e About, NAMs Strategy e Services caíam para 99. Sem JS, o `<noscript>` mostra a foto.
 
 ## Imagens
@@ -111,7 +112,9 @@ O que sustenta a nota (não desfazer sem medir de novo):
 | `PUBLIC_CONTACT_EMAIL`, `PUBLIC_LINKEDIN_URL`, `PUBLIC_CNPJ` | Rodapé, Contact e schema | A linha some, sem placeholder publicado |
 | `RESEND_API_KEY`, `CONTACT_TO_EMAIL`, `CONTACT_FROM_EMAIL` | Envio do formulário | O formulário responde "not active yet" |
 | `PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | Anti-spam | Só o honeypot protege |
-| `PUBLIC_GA4_ID` | GA4 com Consent Mode e barra de consentimento | Sem analytics e sem barra |
+| `PUBLIC_GTM_ID` | Google Tag Manager (padrão `GTM-WPRVL288`; vazio desliga) | Usa o contêiner padrão |
+| `PUBLIC_GA4_ID` | GA4 direto, sem passar pelo Tag Manager | Só o que estiver no Tag Manager |
+| `PUBLIC_CLARITY_ID` | Microsoft Clarity | Sem Clarity |
 
 ## Blog
 

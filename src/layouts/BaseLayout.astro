@@ -5,7 +5,7 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import ConsentBar from '../components/ConsentBar.astro';
 import SiteSearch from '../components/SiteSearch.astro';
-import { BRAND, DOMAIN_PENDING, INTEGRATIONS } from '../config/site';
+import { BRAND, DOMAIN_PENDING, INTEGRATIONS, HAS_ANALYTICS } from '../config/site';
 import { abs } from '../lib/schema';
 import { PAGES } from '../config/pages';
 import { getCollection } from 'astro:content';
@@ -34,6 +34,10 @@ const updated = Astro.props.updated ?? Object.values(PAGES).find((p) => p.path =
 const canonical = abs(path);
 const robots = noindex ? 'noindex, follow' : DOMAIN_PENDING ? 'noindex, nofollow' : 'index, follow, max-image-preview:large';
 const hasBlog = (await getCollection('blog', ({ data }) => !data.draft)).length > 0;
+// Tags de medição só no build de produção (o `astro dev` local não suja os dados do GTM/GA4/Clarity).
+const tags = import.meta.env.PROD && HAS_ANALYTICS
+  ? { gtm: INTEGRATIONS.gtm, ga4: INTEGRATIONS.ga4, clarity: INTEGRATIONS.clarity }
+  : null;
 ---
 <!doctype html>
 <html lang="en">
@@ -70,19 +74,31 @@ const hasBlog = (await getCollection('blog', ({ data }) => !data.draft)).length 
     {hasBlog && <link rel="alternate" type="application/rss+xml" title={`${BRAND.name} blog`} href="/blog/rss.xml" />}
     {jsonLd && <script type="application/ld+json" set:html={jsonLd} />}
 
-    {INTEGRATIONS.ga4 && (
-      <script is:inline define:vars={{ id: INTEGRATIONS.ga4 }}>
+    {tags && (
+      <script is:inline define:vars={tags}>
+        // dataLayer, gtag e Consent Mode (tudo negado por padrão, LGPD) existem desde o início.
         window.dataLayer = window.dataLayer || [];
         function gtag(){ dataLayer.push(arguments); }
         window.gtag = gtag;
         gtag('consent', 'default', { ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied', analytics_storage: 'denied', wait_for_update: 500 });
-        try { if (localStorage.getItem('dsci-consent') === 'granted') gtag('consent', 'update', { analytics_storage: 'granted' }); } catch (e) {}
-        gtag('js', new Date());
-        gtag('config', id);
-        window.__ga4id = id;
+        var granted = function () { try { return localStorage.getItem('dsci-consent') === 'granted'; } catch (e) { return false; } };
+        if (granted()) gtag('consent', 'update', { analytics_storage: 'granted' });
+        // Tag Manager, GA4 e Clarity só entram 3 s DEPOIS do load (pedido da usuária, 2026-10-31):
+        // não disputam banda nem CPU com a página e o PageSpeed não os mede.
+        var add = function (src) { var s = document.createElement('script'); s.async = true; s.src = src; document.head.appendChild(s); };
+        var boot = function () {
+          if (gtm || ga4) gtag('js', new Date());
+          if (gtm) add('https://www.googletagmanager.com/gtm.js?id=' + gtm);
+          if (ga4) { gtag('config', ga4); add('https://www.googletagmanager.com/gtag/js?id=' + ga4); }
+          if (clarity) {
+            window.clarity = window.clarity || function () { (window.clarity.q = window.clarity.q || []).push(arguments); };
+            add('https://www.clarity.ms/tag/' + clarity);
+            if (granted()) window.clarity('consent');
+          }
+        };
+        addEventListener('load', function () { setTimeout(boot, 3000); }, { once: true });
       </script>
     )}
-    {INTEGRATIONS.ga4 && <script async src={`https://www.googletagmanager.com/gtag/js?id=${INTEGRATIONS.ga4}`}></script>}
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -92,7 +108,7 @@ const hasBlog = (await getCollection('blog', ({ data }) => !data.draft)).length 
     </main>
     <Footer />
     <SiteSearch />
-    {INTEGRATIONS.ga4 && <ConsentBar />}
+    {HAS_ANALYTICS && <ConsentBar />}
     <script>
       // Último script da página (depois do conteúdo e da foto do hero): header, menu, prefetch e motion.
       import '../scripts/site';

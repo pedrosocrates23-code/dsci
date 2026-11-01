@@ -189,8 +189,10 @@ const jsonLd = graph(
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.ok) throw new Error(data.error || 'send_failed');
       // Lead só conta depois da confirmação do servidor (plano v2, seção 8).
-      const w = window as unknown as { gtag?: (...a: unknown[]) => void };
+      const w = window as unknown as { gtag?: (...a: unknown[]) => void; dataLayer?: unknown[] };
       w.gtag?.('event', 'generate_lead', { sector: form.sector.value });
+      // Evento para gatilho personalizado no Tag Manager.
+      w.dataLayer?.push({ event: 'generate_lead', sector: form.sector.value });
       showSent();
     } catch (err) {
       const code = (err as Error).message;
