@@ -1,0 +1,238 @@
+---
+/**
+ * Páginas dos silos de serviço: /services/{mãe}/{filha}/{neta}/ (src/config/silos.ts).
+ *  - Mãe: hub da área, com os filhos que estão no ar.
+ *  - Filha: página educativa (critérios técnicos e regulatórios), com o próximo passo para as netas.
+ *  - Neta: landing com o formulário visível (campo `service` = termo do nó).
+ * O link para o pai sai sempre do template, com a âncora registrada (regra 1). Toda página fecha
+ * com as referências (instrução da usuária, 2026-11-02). scripts/check-silos.mjs confere tudo no HTML.
+ */
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import CtaBand from '../../components/CtaBand.astro';
+import ContactForm from '../../components/ContactForm.astro';
+import { siloNode, siloChain, siloPath, siloLevel, siloChildren, siloFileId, liveSiloIds } from '../../config/silos';
+import { graph, websiteNode, webPageNode, breadcrumbNode, faqNode, orgRef, abs } from '../../lib/schema';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('silos');
+  const live = await liveSiloIds();
+  for (const e of entries) {
+    if (e.id !== siloFileId(e.data.node)) throw new Error(`[silos] ${e.id}.md declara node ${e.data.node}: o nome do arquivo tem de ser ${siloFileId(e.data.node)}.md`);
+    if (!live.has(e.data.node)) throw new Error(`[silos] ${e.data.node} sem o pai no ar: publique antes o conteúdo de ${siloNode(e.data.node).parent}`);
+  }
+  return entries.map((entry) => ({
+    params: { silo: siloPath(entry.data.node).slice('/services/'.length, -1) },
+    props: { entry, entries },
+  }));
+}
+interface Props { entry: CollectionEntry<'silos'>; entries: CollectionEntry<'silos'>[]; }
+const { entry, entries } = Astro.props;
+const d = entry.data;
+const node = siloNode(d.node);
+const level = siloLevel(d.node);
+const path = siloPath(d.node);
+const url = abs(path);
+const parent = node.parent ? siloNode(node.parent) : null;
+const { Content, headings } = await render(entry);
+
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+const crumbs = [
+  { name: 'Home', path: '/' },
+  { name: 'Services', path: '/services/' },
+  ...siloChain(d.node).map((n) => ({ name: cap(n.anchor), path: siloPath(n.id) })),
+];
+const children = siloChildren(d.node)
+  .map((n) => ({ node: n, entry: entries.find((e) => e.data.node === n.id) }))
+  .filter((c): c is { node: typeof c.node; entry: CollectionEntry<'silos'> } => Boolean(c.entry));
+const toc = [
+  ...headings.filter((h) => h.depth === 2).map((h) => ({ slug: h.slug, text: h.text })),
+  ...(d.faq.length ? [{ slug: 'faq', text: 'Frequently asked questions' }] : []),
+  { slug: 'references', text: 'References' },
+];
+// Resumo do topo com o termo do nó em negrito (regra R5-SUMZ do redator-5.0).
+const leadAt = d.lead.toLowerCase().indexOf(node.anchor.toLowerCase());
+const lead = leadAt < 0 ? null : [d.lead.slice(0, leadAt), d.lead.slice(leadAt, leadAt + node.anchor.length), d.lead.slice(leadAt + node.anchor.length)];
+const eyebrow = { mother: 'Service area', child: 'Service guide', leaf: 'Service' }[level];
+const deliverablesTitle = { mother: 'What we cover', child: 'How we support this work', leaf: 'What you receive' }[level];
+
+const serviceId = url + '#service';
+const jsonLd = graph(
+  websiteNode(),
+  webPageNode({
+    path, name: d.title, description: d.description, crumbs, about: { '@id': serviceId },
+    extra: {
+      dateModified: d.updated.toISOString().slice(0, 10),
+      ...(d.mentions.length ? { mentions: d.mentions.map((m) => ({ '@type': 'Thing', name: m.name, sameAs: m.sameAs })) } : {}),
+      citation: d.references.map((r) => ({ '@type': 'CreativeWork', name: r.title, url: r.url, publisher: { '@type': 'Organization', name: r.publisher } })),
+    },
+  }),
+  breadcrumbNode(path, crumbs),
+  {
+    '@type': 'Service',
+    '@id': serviceId,
+    name: node.keyword,
+    serviceType: node.keyword,
+    description: d.description,
+    url,
+    provider: orgRef,
+    ...(parent ? { isRelatedTo: { '@id': abs(siloPath(parent.id)) + '#service' } } : {}),
+  },
+  d.faq.length ? faqNode(path, d.faq) : null,
+);
+---
+<BaseLayout title={d.title} description={d.description} path={path} jsonLd={jsonLd} updated={d.updated.toISOString().slice(0, 10)}>
+  <section class="silo-hero on-dark">
+    <div class="wrap silo-hero__inner">
+      <nav class="crumbs" aria-label="Breadcrumb">
+        {crumbs.slice(0, -1).map((c) => <><a href={c.path}>{c.name}</a> / </>)}<span aria-current="page">{crumbs.at(-1)!.name}</span>
+      </nav>
+      <p class="silo-hero__eyebrow">{eyebrow}</p>
+      <h1 class="h-1">{d.h1}</h1>
+      <p class="silo-hero__lead">{lead ? <>{lead[0]}<strong>{lead[1]}</strong>{lead[2]}</> : d.lead}</p>
+      <div class="silo-hero__actions">
+        <a class="btn btn--white" href={level === 'leaf' ? '#proposal' : '/contact/'}>Request a proposal</a>
+        <p class="silo-hero__up">
+          Part of {parent
+            ? <a href={siloPath(parent.id)} data-silo-up>{parent.anchor}</a>
+            : <a href="/services/">all our services</a>}
+        </p>
+      </div>
+    </div>
+  </section>
+
+  {level === 'mother' && children.length > 0 && (
+    <section class="section section--alice silo-kids" aria-labelledby="silo-kids-title">
+      <div class="wrap">
+        <h2 id="silo-kids-title" class="h-2">Services in this area</h2>
+        <ul class="silo-kids__grid">
+          {children.map((c) => (
+            <li class="silo-card">
+              <h3 class="h-3"><a href={siloPath(c.node.id)}>{cap(c.node.anchor)}</a></h3>
+              <p>{c.entry.data.lead}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )}
+
+  <div class="wrap silo-layout">
+    <aside class="toc" aria-label="On this page">
+      <p class="toc__title">On this page</p>
+      <ol>{toc.map((h) => <li><a href={`#${h.slug}`}>{h.text}</a></li>)}</ol>
+    </aside>
+    <div class="silo-main">
+      <div class="prose"><Content /></div>
+
+      {d.deliverables.length > 0 && (
+        <section class="silo-box" aria-labelledby="silo-deliv">
+          <h2 id="silo-deliv" class="silo-box__title">{deliverablesTitle}</h2>
+          <ul>{d.deliverables.map((x) => <li>{x}</li>)}</ul>
+        </section>
+      )}
+
+      {level === 'child' && children.length > 0 && (
+        <section class="silo-next" aria-labelledby="silo-next-title">
+          <h2 id="silo-next-title" class="silo-box__title">Next step</h2>
+          <ul>{children.map((c) => <li><a href={siloPath(c.node.id)}>{cap(c.node.anchor)}</a>: {c.entry.data.lead}</li>)}</ul>
+        </section>
+      )}
+
+      {d.faq.length > 0 && (
+        <section class="silo-faq" aria-labelledby="faq">
+          <h2 id="faq" class="silo-sec">Frequently asked questions</h2>
+          {d.faq.map((f) => <details><summary>{f.q}</summary><p>{f.a}</p></details>)}
+        </section>
+      )}
+
+      <section class="silo-refs" aria-labelledby="references">
+        <h2 id="references" class="silo-sec">References</h2>
+        <ol>
+          {d.references.map((r) => (
+            <li><a href={r.url} rel="noopener" target="_blank">{r.title}</a>. {r.publisher}{r.year && `, ${r.year}`}.</li>
+          ))}
+        </ol>
+      </section>
+    </div>
+  </div>
+
+  {level === 'leaf' ? (
+    <section id="proposal" class="section section--navy on-dark silo-form">
+      <div class="wrap silo-form__grid">
+        <div>
+          <h2 class="h-2">Request a proposal</h2>
+          <p class="silo-form__text">Tell us about the product and the deadline. No confidential data is needed in this first contact: the NDA comes before technical details. We reply with a diagnostic meeting at no cost, then a written proposal with scope, deliverables and fee.</p>
+          <a class="silo-form__more" href="/how-we-work/">How we work</a>
+        </div>
+        <ContactForm service={{ id: node.id, label: node.keyword }} />
+      </div>
+    </section>
+  ) : (
+    <CtaBand title="Tell us what you need assessed." text="A no-cost diagnostic meeting, under NDA if you need it, then a written proposal." cta="Request a proposal" />
+  )}
+</BaseLayout>
+
+<style>
+  .silo-hero { background: var(--navy); padding: 160px 0 72px; }
+  .silo-hero__inner { display: grid; gap: 18px; max-width: 920px; }
+  .crumbs { font-family: var(--f-ui); font-size: 0.9rem; color: rgba(255,255,255,.7); }
+  .crumbs a { color: rgba(255,255,255,.88); }
+  .silo-hero__eyebrow { font-family: var(--f-ui); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mint); }
+  .silo-hero h1 { color: #fff; }
+  .silo-hero__lead { font-size: 1.2rem; color: rgba(255,255,255,.86); max-width: 62ch; }
+  .silo-hero__lead strong { color: #fff; font-weight: 600; }
+  .silo-hero__actions { display: flex; flex-wrap: wrap; gap: 18px 28px; align-items: center; margin-top: 8px; }
+  .silo-hero__up { color: rgba(255,255,255,.75); }
+  .silo-hero__up a { color: var(--mint) !important; font-weight: 600; }
+
+  .silo-kids h2 { color: var(--navy); margin-bottom: 28px; }
+  .silo-kids__grid { list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+  .silo-card { padding: 26px; background: #fff; border: 1px solid var(--line); border-top: 3px solid var(--mint-ink); border-radius: var(--r); display: grid; gap: 10px; }
+  .silo-card a { color: var(--navy); }
+  .silo-card p { color: var(--muted); }
+
+  .silo-layout { display: grid; grid-template-columns: 240px minmax(0, 760px); gap: 56px; justify-content: center; padding-block: clamp(48px, 7vw, 88px); }
+  .silo-main { min-width: 0; display: grid; gap: 40px; align-content: start; }
+  .toc { position: sticky; top: 110px; align-self: start; padding-top: 6px; }
+  .toc__title { font-family: var(--f-display); font-weight: 600; font-size: 0.95rem; color: var(--navy); margin-bottom: 12px; }
+  .toc ol { list-style: none; display: grid; gap: 2px; border-left: 1px solid var(--line); }
+  .toc a { display: block; padding: 6px 0 6px 14px; margin-left: -1px; border-left: 2px solid transparent; font-size: 0.92rem; color: var(--muted); text-decoration: none; }
+  .toc a:hover { color: var(--navy); border-left-color: var(--mint-ink); }
+  @media (max-width: 960px) { .silo-layout { grid-template-columns: minmax(0, 1fr); gap: 0; } .toc { display: none; } }
+
+  .prose { font-size: 1.12rem; line-height: 1.75; color: var(--ink); }
+  .prose :global(h2) { font-size: clamp(1.45rem, 2.2vw, 1.8rem); color: var(--navy); margin: 2.2em 0 0.6em; scroll-margin-top: 110px; }
+  .prose :global(h2:first-child) { margin-top: 0; }
+  .prose :global(h3) { font-size: 1.3rem; color: var(--navy); margin: 1.6em 0 0.5em; }
+  .prose :global(p), .prose :global(ul), .prose :global(ol), .prose :global(table) { margin: 0 0 1.2em; }
+  .prose :global(ul) { list-style: none; padding: 0; }
+  .prose :global(ul li) { position: relative; padding-left: 24px; margin-bottom: 0.4em; }
+  .prose :global(ul li::before) { content: ''; position: absolute; left: 2px; top: 0.55em; width: 6px; height: 11px; border: 2px solid var(--mint-ink); border-right: 0; }
+  .prose :global(ol) { padding-left: 1.4em; }
+  .prose :global(ol li) { margin-bottom: 0.4em; padding-left: 4px; }
+  .prose :global(table) { display: block; overflow-x: auto; width: 100%; border-collapse: collapse; font-size: 0.98rem; border: 1px solid var(--line); border-radius: var(--r); }
+  .prose :global(th) { text-align: left; background: var(--alice); color: var(--navy); font-family: var(--f-display); font-weight: 600; padding: 12px 14px; }
+  .prose :global(td) { padding: 12px 14px; border-top: 1px solid var(--line); vertical-align: top; }
+
+  .silo-box, .silo-next { padding: 26px 28px; border-radius: var(--r); background: var(--alice); border-left: 4px solid var(--mint-ink); }
+  .silo-box__title { font-family: var(--f-display); font-weight: 600; font-size: 1.25rem; color: var(--navy); margin-bottom: 12px; }
+  .silo-box ul, .silo-next ul { list-style: none; display: grid; gap: 8px; }
+  .silo-box li { position: relative; padding-left: 24px; }
+  .silo-box li::before { content: ''; position: absolute; left: 2px; top: 0.55em; width: 6px; height: 11px; border: 2px solid var(--mint-ink); border-right: 0; }
+  .silo-next a { color: var(--navy); font-weight: 600; }
+
+  .silo-sec { font-size: clamp(1.45rem, 2.2vw, 1.8rem); color: var(--navy); margin-bottom: 16px; scroll-margin-top: 110px; }
+  .silo-faq details { border-top: 1px solid var(--line); padding: 16px 0; }
+  .silo-faq details:last-child { border-bottom: 1px solid var(--line); }
+  .silo-faq summary { cursor: pointer; font-family: var(--f-display); font-weight: 600; color: var(--navy); font-size: 1.08rem; }
+  .silo-faq details p { margin-top: 10px; color: var(--ink); }
+  .silo-refs ol { padding-left: 1.4em; display: grid; gap: 8px; font-size: 0.98rem; color: var(--muted); }
+  .silo-refs a { color: var(--navy); }
+
+  .silo-form__grid { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 56px; align-items: start; }
+  .silo-form h2 { color: #fff; }
+  .silo-form__text { margin-top: 16px; font-size: 1.12rem; color: rgba(255,255,255,.86); max-width: 46ch; }
+  .silo-form__more { display: inline-block; margin-top: 16px; color: var(--mint) !important; font-weight: 600; }
+  @media (max-width: 960px) { .silo-form__grid { grid-template-columns: 1fr; } }
+</style>

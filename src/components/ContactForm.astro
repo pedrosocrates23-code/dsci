@@ -1,0 +1,262 @@
+---
+/**
+ * Formulário de contato em 2 etapas (decisão da usuária, 2026-10-31): 1) nome e e-mail; 2) área de
+ * atuação e mensagem. Usado em /contact/ e nas netas dos silos (regra 3: landing com formulário
+ * visível). `service` vai num campo oculto: atribui o lead ao nó do silo no e-mail e no GA4.
+ */
+import { INTEGRATIONS } from '../config/site';
+interface Props { service?: { id: string; label: string } }
+const { service } = Astro.props;
+const sectors = ['Pharmaceutical', 'Biotechnology', 'Cosmetics', 'Ingredients and raw materials', 'Other'];
+---
+<div class="formcard" data-formcard>
+  <!-- Sem JS, as duas etapas aparecem juntas e o envio funciona igual (POST + redirect). -->
+  <form class="form" action="/api/contact/" method="post" novalidate data-contact-form>
+    {service && <input type="hidden" name="service" value={service.label} />}
+    <div class="steps" aria-hidden="true" data-steps-ui hidden>
+      <p class="steps__label">Step <span data-step-now>1</span> of 2</p>
+      <span class="steps__bar"><span class="steps__fill" data-step-fill></span></span>
+    </div>
+
+    <fieldset class="form__step" data-step="1">
+      <legend class="form__legend">Who should we reply to?</legend>
+      <label class="field"><span>Name</span><input name="name" autocomplete="name" required maxlength="120" /></label>
+      <label class="field"><span>Work email</span><input name="email" type="email" autocomplete="email" required maxlength="160" /></label>
+      <div class="form__nav" data-js-only hidden>
+        <span class="magnet-zone form__submit-zone">
+          <button class="btn form__submit" type="button" data-next>Continue</button>
+        </span>
+      </div>
+    </fieldset>
+
+    <fieldset class="form__step" data-step="2">
+      <legend class="form__legend">Tell us about the project</legend>
+      <label class="field"><span>Area of activity</span>
+        <select name="sector" required><option value="">Select</option>{sectors.map((s) => <option>{s}</option>)}</select>
+      </label>
+      <label class="field"><span>Your message</span><textarea name="message" rows="6" required maxlength="4000" placeholder="The product, the regulatory goal and where you are today."></textarea></label>
+
+      <label class="check"><input type="checkbox" name="consent" value="yes" required /><span>I agree to the use of my data to reply to this contact, as described in the <a href="/privacy-policy/">Privacy policy</a>.</span></label>
+
+      <div class="hp" aria-hidden="true"><label>Leave this field empty<input name="website" tabindex="-1" autocomplete="off" /></label></div>
+      {INTEGRATIONS.turnstileSiteKey && <div class="cf-turnstile" data-sitekey={INTEGRATIONS.turnstileSiteKey} data-appearance="interaction-only"></div>}
+
+      <div class="form__nav">
+        <button class="form__back" type="button" data-back data-js-only hidden>Back</button>
+        <span class="magnet-zone form__submit-zone">
+          <button class="btn form__submit" type="submit" data-submit>
+            <span class="form__submit-label">Send message</span>
+          </button>
+        </span>
+      </div>
+    </fieldset>
+
+    <p class="form__error" role="alert" data-form-error hidden></p>
+  </form>
+
+  <div class="sent" data-sent hidden tabindex="-1">
+    <svg class="sent__check" viewBox="0 0 52 52" aria-hidden="true"><path d="M14 27l8 8 16-17" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+    <h2 class="h-2">Message sent.</h2>
+    <p>Thank you for reaching out. We will get back to you to schedule your diagnostic meeting.</p>
+    <ol class="sent__steps">
+      <li data-sent-step><span>1</span>We reply to schedule the meeting.</li>
+      <li data-sent-step><span>2</span>NDA before any product data, if you need it.</li>
+      <li data-sent-step><span>3</span>Diagnostic meeting at no cost, then a written proposal.</li>
+    </ol>
+  </div>
+</div>
+
+{INTEGRATIONS.turnstileSiteKey && <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>}
+
+<script>
+  type Motion = { gsap: typeof import('gsap').gsap; wiggle: (el: Element, s?: number) => void; shake: (el: Element) => void };
+  const motion = () => (window as unknown as { __dsciMotion?: Motion }).__dsciMotion;
+
+  const form = document.querySelector<HTMLFormElement>('[data-contact-form]');
+  const submit = form?.querySelector<HTMLButtonElement>('[data-submit]');
+  const next = form?.querySelector<HTMLButtonElement>('[data-next]');
+  const errorBox = form?.querySelector<HTMLElement>('[data-form-error]');
+  const sent = document.querySelector<HTMLElement>('[data-sent]');
+  const steps = [...(form?.querySelectorAll<HTMLFieldSetElement>('[data-step]') ?? [])];
+  const stepNow = form?.querySelector<HTMLElement>('[data-step-now]');
+  const stepFill = form?.querySelector<HTMLElement>('[data-step-fill]');
+  let current = 0;
+  let wiggled = false;
+
+  // Com JS, o formulário vira 2 etapas: liga os controles e mostra só a 1ª.
+  if (form) {
+    form.classList.add('is-stepped');
+    form.querySelectorAll<HTMLElement>('[data-js-only], [data-steps-ui]').forEach((el) => (el.hidden = false));
+    steps.forEach((s, i) => s.classList.toggle('is-active', i === 0));
+  }
+
+  const fieldsOf = (scope: ParentNode) => [...scope.querySelectorAll<HTMLInputElement>('input:not([name="website"]),select,textarea')];
+
+  /** Marca os campos inválidos do trecho e devolve se está tudo certo. */
+  function validate(scope: ParentNode, button: HTMLElement) {
+    if (!errorBox) return false;
+    errorBox.hidden = true;
+    const invalid = fieldsOf(scope).filter((el) => !el.checkValidity());
+    if (!invalid.length) return true;
+    invalid.forEach((el) => el.closest('.field, .check')?.classList.add('is-invalid'));
+    invalid[0].focus();
+    motion()?.shake(button);
+    errorBox.textContent = 'Please complete the highlighted fields.';
+    errorBox.hidden = false;
+    return false;
+  }
+
+  function goTo(i: number) {
+    if (!form || i === current) return;
+    const from = steps[current];
+    const to = steps[i];
+    const dir = i > current ? 1 : -1;
+    current = i;
+    if (stepNow) stepNow.textContent = String(i + 1);
+    stepFill?.style.setProperty('--p', String((i + 1) / steps.length));
+    errorBox && (errorBox.hidden = true);
+    const focusFirst = () => fieldsOf(to)[0]?.focus({ preventScroll: true });
+    const m = motion();
+    if (!m) { from.classList.remove('is-active'); to.classList.add('is-active'); focusFirst(); return; }
+    m.gsap.to(from, {
+      opacity: 0, x: -24 * dir, duration: 0.22, ease: 'power2.in',
+      onComplete: () => {
+        from.classList.remove('is-active');
+        m.gsap.set(from, { clearProps: 'opacity,transform' });
+        to.classList.add('is-active');
+        m.gsap.fromTo(to, { opacity: 0, x: 24 * dir }, { opacity: 1, x: 0, duration: 0.4, ease: 'power3.out', clearProps: 'opacity,transform' });
+        focusFirst();
+      },
+    });
+  }
+
+  next?.addEventListener('click', () => { if (validate(steps[0], next)) goTo(1); });
+  form?.querySelector('[data-back]')?.addEventListener('click', () => goTo(0));
+
+  // Quando a etapa atual fica válida pela 1ª vez, o botão dela dá um "wiggle" (convite ao clique).
+  form?.addEventListener('input', () => {
+    const button = current === 0 ? next : submit;
+    if (!wiggled && current === 1 && button && fieldsOf(steps[1]).every((el) => el.checkValidity())) { wiggled = true; motion()?.wiggle(button, 3); }
+    form.querySelectorAll('.field.is-invalid, .check.is-invalid').forEach((f) => {
+      const input = f.querySelector<HTMLInputElement>('input,select,textarea');
+      if (input?.checkValidity()) f.classList.remove('is-invalid');
+    });
+  });
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!form || !submit || !errorBox || !next) return;
+    // Enter na 1ª etapa avança em vez de enviar.
+    if (current === 0) { if (validate(steps[0], next)) goTo(1); return; }
+    // Campo da etapa 1 inválido (ex.: e-mail apagado com o navegador voltando): volta para ela.
+    if (fieldsOf(steps[0]).some((el) => !el.checkValidity())) { goTo(0); return; }
+    if (!validate(steps[1], submit)) return;
+    submit.disabled = true;
+    submit.classList.add('is-loading');
+    try {
+      const res = await fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' } });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) throw new Error(data.error || 'send_failed');
+      // Lead só conta depois da confirmação do servidor (plano v2, seção 8).
+      const w = window as unknown as { gtag?: (...a: unknown[]) => void; dataLayer?: unknown[] };
+      const service = (form.elements.namedItem('service') as HTMLInputElement | null)?.value;
+      w.gtag?.('event', 'generate_lead', { sector: form.sector.value, ...(service ? { service } : {}) });
+      // Evento para gatilho personalizado no Tag Manager.
+      w.dataLayer?.push({ event: 'generate_lead', sector: form.sector.value, ...(service ? { service } : {}) });
+      showSent();
+    } catch (err) {
+      const code = (err as Error).message;
+      errorBox.textContent = code === 'not_configured'
+        ? 'The contact form is not active yet. Please try again soon.'
+        : 'Something went wrong while sending. Please try again in a moment.';
+      errorBox.hidden = false;
+      motion()?.shake(submit);
+    } finally {
+      submit.disabled = false;
+      submit.classList.remove('is-loading');
+    }
+  });
+
+  function showSent() {
+    if (!form || !sent) return;
+    const m = motion();
+    const reveal = () => {
+      form.hidden = true;
+      sent.hidden = false;
+      sent.focus();
+      if (!m) return;
+      const tl = m.gsap.timeline();
+      tl.from(sent.querySelector('.sent__check path'), { strokeDasharray: 40, strokeDashoffset: 40, duration: 0.6, ease: 'power2.out' })
+        .from(sent.querySelectorAll('h2, p'), { y: 16, opacity: 0, stagger: 0.08, duration: 0.5, ease: 'power3.out' }, '-=0.2')
+        .from(sent.querySelectorAll('[data-sent-step]'), { x: -16, opacity: 0, stagger: 0.12, duration: 0.5, ease: 'power3.out' }, '-=0.2');
+    };
+    if (m) m.gsap.to(form, { opacity: 0, y: -12, duration: 0.3, ease: 'power2.in', onComplete: reveal });
+    else reveal();
+  }
+</script>
+
+<style>
+  .formcard {
+    padding: clamp(24px, 3vw, 40px); border-radius: 10px;
+    background: rgba(6, 27, 54, 0.55); -webkit-backdrop-filter: blur(24px) saturate(170%); backdrop-filter: blur(24px) saturate(170%);
+    border: 1px solid var(--glass-border); box-shadow: var(--glass-shine), 0 30px 80px -30px rgba(0,0,0,.6);
+  }
+  .form { display: grid; gap: 16px; }
+  .form__step { display: grid; gap: 16px; border: 0; margin: 0; padding: 0; min-width: 0; }
+  .form__step + .form__step { padding-top: 8px; }
+  .is-stepped .form__step:not(.is-active) { display: none; }
+  .form__legend { padding: 0; margin-bottom: 4px; font-family: var(--f-display); font-weight: 600; font-size: clamp(1.25rem, 1.8vw, 1.5rem); letter-spacing: -0.015em; color: #fff; }
+  .form__nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 4px; }
+  .form__nav .form__submit-zone { margin-left: auto; }
+  .form__back {
+    font: inherit; font-family: var(--f-ui); font-weight: 600; font-size: 0.95rem; color: rgba(255,255,255,.82);
+    background: none; border: 0; padding: 10px 2px; cursor: pointer; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgba(255,255,255,.35);
+  }
+  .form__back:hover { color: #fff; text-decoration-color: var(--mint); }
+  .form__back:focus-visible { outline: 2px solid var(--mint); outline-offset: 3px; border-radius: 3px; }
+  .steps { display: grid; gap: 10px; }
+  .steps[hidden] { display: none; }
+  .steps__label { font-family: var(--f-ui); font-size: 0.8rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,.66); }
+  .steps__bar { position: relative; height: 3px; border-radius: 3px; background: rgba(255,255,255,.16); overflow: hidden; }
+  .steps__fill { --p: 0.5; position: absolute; inset: 0; background: var(--mint); transform-origin: left center; transform: scaleX(var(--p)); transition: transform 0.5s var(--ease-out); }
+  .form__row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .field { display: grid; gap: 7px; }
+  .field > span { font-family: var(--f-ui); font-size: 0.85rem; font-weight: 600; color: rgba(255,255,255,.92); }
+  .field em { font-style: normal; font-weight: 400; color: rgba(255,255,255,.62); }
+  .field input, .field select, .field textarea {
+    width: 100%; font: inherit; font-size: 1rem; color: var(--ink); background: rgba(255,255,255,.96);
+    border: 1px solid transparent; border-radius: 6px; padding: 12px 13px; min-height: 48px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .field textarea { resize: vertical; min-height: 128px; }
+  .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--mint); box-shadow: 0 0 0 3px rgba(0,200,150,.35); }
+  .is-invalid input, .is-invalid select, .is-invalid textarea { border-color: #ff9b8a; box-shadow: 0 0 0 3px rgba(255,155,138,.3); }
+  .check { display: flex; gap: 12px; align-items: flex-start; font-size: 0.95rem; color: rgba(255,255,255,.88); cursor: pointer; }
+  .check input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--mint); flex: none; }
+  .check.is-invalid span { color: #ffc2b8; }
+  .check a { color: var(--mint) !important; }
+  .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  .form__error { color: #ffc2b8; font-weight: 600; }
+  .form__submit-zone { justify-self: start; }
+  .form__submit { min-width: 200px; }
+  .form__submit.is-loading { pointer-events: none; }
+  .form__submit.is-loading .form__submit-label::after { content: '…'; }
+  .sent__steps li { display: flex; gap: 12px; align-items: center; color: rgba(255,255,255,.9); }
+  .sent__steps span {
+    flex: none; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 5px;
+    border: 1px solid var(--mint); color: var(--mint); font-family: var(--f-ui); font-size: 0.85rem; font-weight: 600;
+  }
+  @media (max-width: 560px) { .form__row { grid-template-columns: 1fr; } }
+  @media (max-width: 640px) {
+    .form__nav { flex-direction: column-reverse; align-items: stretch; }
+    .form__nav .form__submit-zone { margin-left: 0; display: block; }
+    .form__back { align-self: center; }
+  }
+
+  .sent { display: grid; gap: 16px; padding: 12px 4px; outline: none; }
+  .sent[hidden] { display: none; }
+  .sent__check { width: 64px; height: 64px; color: var(--navy-deep); background: var(--mint); border-radius: 8px; padding: 6px; }
+  .sent h2 { color: #fff; }
+  .sent p { color: rgba(255,255,255,.86); }
+  .sent__steps { list-style: none; display: grid; gap: 10px; margin-top: 6px; }
+</style>

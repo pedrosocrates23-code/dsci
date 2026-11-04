@@ -9,6 +9,7 @@ import { PAGES } from '../config/pages';
 import { FAQ } from '../config/faq';
 import { BRAND, CONTACT } from '../config/site';
 import { getPosts, getTopicsWithPosts, postPath, topicPath } from './blog';
+import { siloChain, siloPath } from '../config/silos';
 
 export type SearchGroup = 'Pages' | 'Services' | 'Process' | 'FAQ' | 'Articles' | 'Contact';
 export interface SearchItem {
@@ -52,6 +53,11 @@ export async function buildSearchIndex(): Promise<SearchItem[]> {
   page('Privacy policy', PAGES.privacy, 'privacy lgpd data cookies');
 
   items.push(...SERVICES, ...PROCESS);
+  // Páginas dos silos de serviço que estão no ar.
+  for (const e of await getCollection('silos')) {
+    const chain = siloChain(e.data.node);
+    items.push({ g: 'Services', t: e.data.h1, d: e.data.lead, u: siloPath(e.data.node), p: ['Services', ...chain.slice(0, -1).map((n) => n.keyword)].join(' › '), k: chain.at(-1)!.keyword.toLowerCase() });
+  }
   for (const f of FAQ) items.push({ g: 'FAQ', t: f.q, d: f.a, u: '/how-we-work/#faq', p: 'How we work › FAQ' });
 
   const authors = await getCollection('authors');

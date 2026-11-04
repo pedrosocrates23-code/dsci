@@ -9,7 +9,8 @@ export const prerender = false;
 
 // Formulário em 2 etapas: (1) nome e e-mail; (2) área de atuação e mensagem.
 const REQUIRED = ['name', 'email', 'sector', 'message'] as const;
-const LIMITS: Record<string, number> = { name: 120, email: 160, sector: 80, message: 4000 };
+// `service` (opcional) vem do campo oculto das páginas de silo: diz de qual serviço o lead chegou.
+const LIMITS: Record<string, number> = { name: 120, email: 160, sector: 80, message: 4000, service: 120 };
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
@@ -57,7 +58,7 @@ export const POST: APIRoute = async ({ request, redirect, clientAddress }) => {
   const from = (env.CONTACT_FROM_EMAIL as string | undefined) || to;
   if (!apiKey || !to || !from) return reply(503, { ok: false, error: 'not_configured' });
 
-  const rows = [['Name', data.name], ['Email', data.email], ['Area of activity', data.sector]];
+  const rows = [['Name', data.name], ['Email', data.email], ['Area of activity', data.sector], ...(data.service ? [['Service page', data.service]] : [])];
   const html = `<h2>New contact from the website</h2><table>${rows.map(([k, v]) => `<tr><td><b>${esc(k)}</b></td><td>${esc(v)}</td></tr>`).join('')}</table><h3>Message</h3><p>${esc(data.message).replace(/\n/g, '<br>')}</p><p style="color:#666">Reply to this email to answer the sender directly. Received at ${new Date().toISOString()}</p>`;
 
   const res = await fetch('https://api.resend.com/emails', {
@@ -67,7 +68,7 @@ export const POST: APIRoute = async ({ request, redirect, clientAddress }) => {
       from: `D-Sci Consulting website <${from}>`,
       to: [to],
       reply_to: data.email,
-      subject: `[Website] ${data.sector} · ${data.name}`,
+      subject: `[Website] ${data.service || data.sector} · ${data.name}`,
       html,
     }),
   }).catch(() => null);

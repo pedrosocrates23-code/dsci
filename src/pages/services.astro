@@ -5,6 +5,18 @@ import CtaBand from '../components/CtaBand.astro';
 import SectionBackdrop from '../components/SectionBackdrop.astro';
 import { PAGES } from '../config/pages';
 import { graph, websiteNode, webPageNode, breadcrumbNode, serviceNode, orgRef, abs } from '../lib/schema';
+import { siloNode, siloPath, liveSiloIds } from '../config/silos';
+
+// Cartão → página do silo (plano SILOS-SEMANTICOS-2026-11-02). O link só aparece com a página no ar,
+// sempre com a âncora registrada do nó (regra 2).
+const live = await liveSiloIds();
+const SILO_OF: Record<string, string> = { 'toxicological-assessment': '1', 'nonclinical-writing': '3', 'fractional-toxicologist': '4', 'cosmetic-safety': '1.3' };
+const siloLink = (cardId: string) => {
+  const id = SILO_OF[cardId];
+  if (!id || !live.has(id)) return null;
+  const a = siloNode(id).anchor;
+  return { href: siloPath(id), label: a.charAt(0).toUpperCase() + a.slice(1) };
+};
 
 const meta = PAGES.services;
 const crumbs = [{ name: 'Home', path: '/' }, { name: 'Services', path: meta.path }];
@@ -100,6 +112,7 @@ const jsonLd = graph(
               <p class="svc-card__sector">{s.sectorLabel}</p>
               <p class="svc-card__text">{s.text}</p>
               {s.link && <a class="link-arrow" href={s.link.href}>{s.link.label}</a>}
+              {siloLink(s.id) && <a class="link-arrow" href={siloLink(s.id)!.href}>{siloLink(s.id)!.label}</a>}
             </div>
             <div class="svc-card__box">
               <p class="svc-card__label">Deliverables</p>
@@ -123,6 +136,7 @@ const jsonLd = graph(
             <p>{o.text}</p>
             <p class="ongoing__label">Includes</p>
             <ul>{o.items.map((i) => <li>{i}</li>)}</ul>
+            {siloLink(o.id) && <a class="link-arrow" href={siloLink(o.id)!.href}>{siloLink(o.id)!.label}</a>}
           </article>
         ))}
       </div>
@@ -138,6 +152,7 @@ const jsonLd = graph(
             <span class="cos-card__n" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
             <h2 class="h-3">{c.title}</h2>
             <p>{c.text}</p>
+            {siloLink(c.id) && <a class="link-arrow" href={siloLink(c.id)!.href}>{siloLink(c.id)!.label}</a>}
           </article>
         ))}
       </div>

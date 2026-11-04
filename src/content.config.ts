@@ -77,4 +77,27 @@ const blog = defineCollection({
   }),
 });
 
-export const collections = { authors, topics, blog };
+/**
+ * Páginas dos silos de serviço (src/config/silos.ts). Um arquivo por nó: 1.md, 1-3.md, 1-3-1.md.
+ * Toda página fecha com referências (instrução da usuária, 2026-11-02): sem fonte, o build falha.
+ */
+const silos = defineCollection({
+  loader: glob({ pattern: ['*.md', '!_*'], base: './src/content/silos' }),
+  schema: z.object({
+    node: z.string().regex(/^\d(\.\d){0,2}$/),
+    title: z.string().max(65),
+    description: z.string().min(80).max(155),
+    h1: z.string(),
+    lead: z.string(),
+    updated: z.coerce.date(),
+    deliverables: z.array(z.string()).default([]),
+    faq: z.array(z.object({ q: z.string(), a: z.string() })).default([]),
+    /** Entidades do texto com item no Wikidata conferido (entity-ops). Vão no `mentions` do WebPage. */
+    mentions: z.array(z.object({ name: z.string(), sameAs: z.url() })).default([]),
+    references: z
+      .array(z.object({ title: z.string(), publisher: z.string(), year: z.string().optional(), url: z.url() }))
+      .min(1),
+  }),
+});
+
+export const collections = { authors, topics, blog, silos };
